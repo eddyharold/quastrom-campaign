@@ -1,0 +1,28 @@
+@font-face {
+  font-family: "Proxima Nova Alt";
+  src: url("../fonts/proxima-nova/Proxima Nova Alt Regular.otf") format("opentype");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Proxima Nova ScOsf";
+  src: url("../fonts/proxima-nova/Proxima Nova ScOsf Regular.otf") format("opentype");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --font-proxima-nova-alt: "Proxima Nova Alt", sans-serif;
+  --font-proxima-nova-sc: "Proxima Nova ScOsf", sans-serif;
+}
+
+.font-proxima-nova-alt {
+  font-family: var(--font-proxima-nova-alt);
+}
+
+.font-proxima-nova-sc {
+  font-family: var(--font-proxima-nova-sc);
+}

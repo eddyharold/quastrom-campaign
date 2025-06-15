@@ -1,0 +1,121 @@
+{
+  "version": 1,
+  "rules": [
+    {
+      "id": "core-no-dependencies",
+      "description": "Core layer should not depend on any other layers",
+      "severity": "error",
+      "pattern": "core/.*",
+      "restrictedImports": [
+        "^shared/",
+        "^features/",
+        "^infrastructure/",
+        "^presentation/"
+      ]
+    },
+    {
+      "id": "shared-core-only",
+      "description": "Shared layer should only depend on Core",
+      "severity": "error",
+      "pattern": "shared/.*",
+      "restrictedImports": [
+        "^features/",
+        "^infrastructure/",
+        "^presentation/"
+      ]
+    },
+    {
+      "id": "feature-layer-deps",
+      "description": "Feature layer dependencies must follow clean architecture flow",
+      "severity": "error",
+      "pattern": "features/([^/]+)/([^/]+)/.*",
+      "capture": ["featureName", "layer"],
+      "restrictedImports": {
+        "presentation": [
+          "^features/.*/domain/.*",
+          "^features/.*/application/.*",
+          "^features/.*/infrastructure/.*"
+        ],
+        "application": [
+          "^features/.*/domain/.*"
+        ],
+        "infrastructure": [
+          "^features/.*/presentation/.*"
+        ]
+      }
+    },
+    {
+      "id": "infra-core-only",
+      "description": "Infrastructure layer should only depend on Core",
+      "severity": "error",
+      "pattern": "infrastructure/.*",
+      "restrictedImports": [
+        "^features/",
+        "^presentation/",
+        "^shared/"
+      ]
+    },
+    {
+      "id": "presentation-deps",
+      "description": "Presentation layer can depend on all layers except infrastructure",
+      "severity": "error",
+      "pattern": "presentation/.*",
+      "restrictedImports": [
+        "^infrastructure/"
+      ]
+    },
+    {
+      "id": "feature-boundaries",
+      "description": "Features should not directly depend on other features",
+      "severity": "warning",
+      "pattern": "features/([^/]+)/.*",
+      "capture": ["featureName"],
+      "restrictedImports": [
+        "^features/(?!\\1/).*"
+      ]
+    },
+    {
+      "id": "domain-interfaces",
+      "description": "Domain layer should only contain interfaces and types, no implementations",
+      "severity": "error",
+      "pattern": "(core/|features/.*/domain/).*",
+      "forbiddenNodeTypes": [
+        "ClassDeclaration",
+        "FunctionDeclaration",
+        "VariableDeclaration"
+      ],
+      "allowedNodeTypes": [
+        "InterfaceDeclaration",
+        "TypeAlias",
+        "TSInterfaceDeclaration",
+        "TSTypeAliasDeclaration"
+      ]
+    },
+    {
+      "id": "no-direct-api-calls",
+      "description": "API calls should only be made from infrastructure layer",
+      "severity": "error",
+      "pattern": "(?!infrastructure/).*",
+      "forbiddenImports": [
+        "axios",
+        "fetch",
+        "node-fetch",
+        "@apollo/client"
+      ]
+    },
+    {
+      "id": "use-cases-naming",
+      "description": "Use case files should follow the 'verb-noun.action.ts' pattern",
+      "severity": "warning",
+      "pattern": "features/.*/application/use-cases/.*",
+      "namingPattern": "[a-z]+(-[a-z]+)*\\.(action|usecase)\\.(ts|tsx)$"
+    },
+    {
+      "id": "presentation-components-naming",
+      "description": "Presentation components should be named with PascalCase and have .component suffix",
+      "severity": "warning",
+      "pattern": "features/.*/presentation/components/.*",
+      "namingPattern": "[A-Z][a-zA-Z0-9]*\\.component\\.(tsx|ts)"
+    }
+  ]
+}

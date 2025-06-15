@@ -1,0 +1,15 @@
+@font-face {
+  font-family: "Asterone";
+  src: url("../fonts/asterone/Asterone Regular.ttf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --font-asterone: "Asterone", sans-serif;
+}
+
+.font-asterone {
+  font-family: var(--font-asterone);
+}
