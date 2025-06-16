@@ -7,6 +7,9 @@ import { Bell, CreditCard, Laptop, Shield, Smartphone, User } from "lucide-react
 import { Switch } from "@/presentation/components/ui/switch";
 import { PageHeader } from "@/presentation/components/page-header";
 import { Badge } from "@/presentation/components/ui/badge";
+import { Card, CardHeader, CardTitle, CardContent } from "@/presentation/components/ui/card";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@radix-ui/react-select";
+import { Separator } from "@radix-ui/react-separator";
 
 export default function ProfilPage() {
   return (
@@ -38,54 +41,120 @@ export default function ProfilPage() {
         </TabsList>
 
         <TabsContent value="informations" className="space-y-4">
-          <div className="space-y-8 bg-card p-6 rounded-lg">
-            <div className="flex items-center justify-between border-b border-dashed pb-2">
-              <h3 className="font-medium text-lg">Changer le logo de l'entreprise</h3>
-              <Button>Enregistrer</Button>
-            </div>
+          <Card>
+            <CardHeader>
+              <CardTitle>Informations personnelles</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="flex flex-col md:flex-row gap-6">
+                <div className="flex flex-col items-center space-y-2">
+                  <Avatar className="h-24 w-24">
+                    <AvatarImage src="/mystical-forest-spirit.png" />
+                    <AvatarFallback>JD</AvatarFallback>
+                  </Avatar>
+                  <Button variant="outline" size="sm">
+                    Changer la photo
+                  </Button>
+                </div>
 
-            <div className="flex gap-8">
-              <Avatar className="size-24">
-                <AvatarImage src="/mystical-forest-spirit.png" />
-                <AvatarFallback className="rounded-lg">JD</AvatarFallback>
-              </Avatar>
-              <div className="space-y-2 mt-4">
-                <Button variant="outline" size="sm">
-                  Uploader une photo
-                </Button>
-                <p className="text-sm text-muted-foreground">PNG, JPG up to 2MB</p>
+                <div className="flex-1 space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="first-name">Prénom</Label>
+                      <Input id="first-name" defaultValue="Jean" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="last-name">Nom</Label>
+                      <Input id="last-name" defaultValue="Dupont" />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="email">Email</Label>
+                      <Input id="email" type="email" defaultValue="jean.dupont@example.com" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="phone">Téléphone</Label>
+                      <Input id="phone" type="tel" defaultValue="+33 6 12 34 56 78" />
+                    </div>
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
 
-          <div className="space-y-8 bg-card p-6 rounded-lg">
-            <div className="flex items-center justify-between border-b border-dashed pb-2">
-              <h3 className="font-medium text-lg">Modifier les informations de l'entreprise</h3>
-              <Button>Enregistrer</Button>
-            </div>
+              <Separator />
 
-            <div className="grid grid-cols-2 gap-y-8 gap-x-6">
-              <div className="space-y-2 col-span-2">
-                <Label>Nom complet</Label>
-                <Input placeholder="Ex: SkyWalker" />
+              <div className="space-y-4">
+                <h3 className="font-medium">Adresse</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="address">Adresse</Label>
+                    <Input id="address" defaultValue="123 Rue de la République" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="city">Ville</Label>
+                    <Input id="city" defaultValue="Paris" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="postal-code">Code postal</Label>
+                    <Input id="postal-code" defaultValue="75001" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="country">Pays</Label>
+                    <Select defaultValue="france">
+                      <SelectTrigger id="country">
+                        <SelectValue placeholder="Sélectionnez un pays" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="france">France</SelectItem>
+                        <SelectItem value="belgium">Belgique</SelectItem>
+                        <SelectItem value="switzerland">Suisse</SelectItem>
+                        <SelectItem value="canada">Canada</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
               </div>
 
-              <div className="space-y-2">
-                <Label>Email</Label>
-                <Input placeholder="Ex: example@company.fr" />
+              <Separator />
+
+              <div className="space-y-4">
+                <h3 className="font-medium">Informations professionnelles</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="company">Société</Label>
+                    <Input id="company" defaultValue="Dupont Consulting" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="siret">SIRET</Label>
+                    <Input id="siret" defaultValue="123 456 789 00012" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="website">Site web</Label>
+                    <Input id="website" defaultValue="https://dupontconsulting.fr" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="activity">Activité principale</Label>
+                    <Select defaultValue="conseil">
+                      <SelectTrigger id="activity">
+                        <SelectValue placeholder="Sélectionnez une activité" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="conseil">Conseil en rénovation</SelectItem>
+                        <SelectItem value="blog">Blog / Site d'information</SelectItem>
+                        <SelectItem value="artisan">Artisan / Entreprise BTP</SelectItem>
+                        <SelectItem value="autre">Autre</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
               </div>
 
-              <div className="space-y-2">
-                <Label>Numero de telephone</Label>
-                <Input placeholder="Ex: +1 (555) 123-4567" />
+              <div className="flex justify-end">
+                <Button>Enregistrer les modifications</Button>
               </div>
-
-              <div className="space-y-2 col-span-2">
-                <Label>Adresse</Label>
-                <Input placeholder="Ex: Paris" />
-              </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="paiement" className="grid lg:grid-cols-2 gap-4">

@@ -1,6 +1,7 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   ArrowUpRight,
+  ChevronRight,
   Eye,
   Info,
   MousePointerClick,
@@ -20,6 +21,7 @@ import { Button } from "@/presentation/components/ui/button";
 import { Badge } from "@/presentation/components/ui/badge";
 import { Link } from "react-router";
 import { RECENT_CAMPAIGNS } from "@/domain/data/campaign";
+import { allNotifications, NotificationCard } from "../components/notification-pannel";
 
 // import { DashboardSkeleton } from "../components/dashboard-skeleton";
 
@@ -59,6 +61,19 @@ export default function DashboardPage() {
     { date: "14/04", Clics: 62, Leads: 30, Conversions: 8 },
   ];
 
+  const [isNotificationPanelOpen, setIsNotificationPanelOpen] = useState(false)
+  const [notifications, setNotifications] = useState(allNotifications)
+
+  const handleDismissNotification = (id: number) => {
+    setNotifications((prev) => prev.filter((notification) => notification.id !== id))
+  }
+
+  const handleMarkAllRead = () => {
+    setNotifications((prev) => prev.map((notification) => ({ ...notification, read: true })))
+  }
+    // Get latest 3 unread notifications for dashboard display
+  const dashboardNotifications = notifications.filter((n) => !n.read).slice(0, 3)
+
   return (
     <div className="space-y-6">
       <div className="space-y-1">
@@ -67,6 +82,33 @@ export default function DashboardPage() {
           Bienvenue sur votre espace affilié Quastrom. Analysez vos performances et gagnez plus.
         </p>
       </div>
+
+      {dashboardNotifications.length > 0 && (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-medium text-gray-900">Recent Notifications</h3>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsNotificationPanelOpen(true)}
+                  className="text-sm text-muted-foreground hover:text-foreground"
+                >
+                  View More
+                  <ChevronRight className="h-3 w-3 ml-1" />
+                </Button>
+              </div>
+
+              <div className="space-y-2">
+                {dashboardNotifications.map((notification) => (
+                  <NotificationCard
+                    key={notification.id}
+                    notification={notification}
+                    onDismiss={handleDismissNotification}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
 
       <div className="grid w-full gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>

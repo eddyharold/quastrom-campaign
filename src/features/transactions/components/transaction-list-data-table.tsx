@@ -21,8 +21,8 @@ export const TransactionDataTable = ({ transactions, isLoading }: TransactionDat
   const columns: ColumnDef<Transaction>[] = useMemo(
     () => [
       {
-        id: "campaign",
-        header: "Campagne",
+        id: "type",
+        header: "Type",
         cell: ({ row }) => (
           <div className="flex items-center gap-2">
             {row.original.type === "top-up" ? (
@@ -64,26 +64,7 @@ export const TransactionDataTable = ({ transactions, isLoading }: TransactionDat
           className: "w-[20%]",
         },
       },
-      {
-        id: "affilier",
-        header: "Promoteur",
-        cell: ({ row }) =>
-          row.original.user ? (
-            <div className="group space-y-1 cursor-pointer">
-              <p className="font-medium truncate group-hover:underline group-hover:underline-offset-2 group-hover:text-primary group-hover:decoration-dashed">
-                {row.original.user.fullname}
-              </p>
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <span>{row.original.user.email}</span>
-              </div>
-            </div>
-          ) : (
-            <span className="text-xs text-muted-foreground">-</span>
-          ),
-        meta: {
-          className: "w-[20%]",
-        },
-      },
+      
       {
         id: "status",
         header: "Statut",

@@ -5,6 +5,7 @@ import { PageSkeleton } from "@/presentation/components/loaders/page-skeleton";
 import { AuthLayout } from "@/presentation/layouts/auth-layout";
 import { NotFound } from "@/presentation/components/not-found";
 import { SpaceLayout } from "@/presentation/layouts/space-layout";
+import CreateCampaign from "@/features/campaigns/presentation/create-new-campaigns";
 
 const LoginPage = lazy(() => import("@/features/auth/presentation/pages/login-page"));
 const DashboardPage = lazy(() => import("@/features/dashboard/presentation/pages/dashboard-page"));
@@ -28,11 +29,24 @@ export const router = createBrowserRouter([
       },
       {
         path: "campaigns",
-        element: (
-          <Suspense fallback={<PageSkeleton />}>
-            <CampaignListPage />
-          </Suspense>
-        ),
+        children: [
+          {
+            index: true,
+            element: (
+              <Suspense fallback={<PageSkeleton />}>
+                <CampaignListPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "create",
+            element: (
+              <Suspense fallback={<PageSkeleton />}>
+                <CreateCampaign />
+              </Suspense>
+            ),
+          },
+        ],
       },
       {
         path: "leads",
