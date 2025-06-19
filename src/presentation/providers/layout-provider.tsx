@@ -4,15 +4,19 @@ import { Component, createContext, FC, ReactNode, useCallback, useContext, useMe
 interface LayoutContextType {
   breadcrumb: Breadcrumb[];
   isReloading: boolean;
+  openNotification: boolean;
   updateBreadcrumb: (value: Breadcrumb[]) => void;
   updateReloadingState: (value: boolean) => void;
+  updateNotificationState: (value: boolean) => void;
 }
 
 const defaultContextValue: LayoutContextType = {
   breadcrumb: [],
   isReloading: false,
+  openNotification: false,
   updateBreadcrumb: () => {},
   updateReloadingState: () => {},
+  updateNotificationState: () => {},
 };
 
 export const LayoutContext = createContext<LayoutContextType>(defaultContextValue);
@@ -58,6 +62,7 @@ export const LayoutProvider: FC<LayoutProviderProps> = ({
 }) => {
   const [breadcrumb, setBreadcrumb] = useState<Breadcrumb[]>(initialBreadcrumb);
   const [isReloading, setIsReloading] = useState<boolean>(initialLoadingState);
+  const [openNotification, setOpenNotification] = useState<boolean>(false);
 
   const updateBreadcrumb = useCallback((value: Breadcrumb[]) => {
     try {
@@ -75,14 +80,24 @@ export const LayoutProvider: FC<LayoutProviderProps> = ({
     }
   }, []);
 
+  const updateNotificationState = useCallback((value: boolean) => {
+    try {
+      setOpenNotification(Boolean(value));
+    } catch (error) {
+      console.error("Error updating notification state:", error);
+    }
+  }, []);
+
   const providerValue = useMemo<LayoutContextType>(
     () => ({
       breadcrumb,
       isReloading,
+      openNotification,
       updateBreadcrumb,
       updateReloadingState,
+      updateNotificationState,
     }),
-    [breadcrumb, isReloading, updateBreadcrumb, updateReloadingState]
+    [breadcrumb, isReloading, openNotification, updateBreadcrumb, updateReloadingState, updateNotificationState]
   );
 
   return (

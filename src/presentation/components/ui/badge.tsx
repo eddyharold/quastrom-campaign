@@ -41,6 +41,8 @@ export const badgeVariants = cva(
         warning:
           "border-transparent bg-warning text-warning-foreground [a&]:hover:bg-warning/90 dark:bg-warning/80 dark:[a&]:hover:bg-warning/70",
         info: "border-transparent bg-info text-info-foreground [a&]:hover:bg-info/90 dark:bg-info/80 dark:[a&]:hover:bg-info/70",
+        accent:
+          "border-transparent bg-accent text-accent-foreground [a&]:hover:bg-accent/90 dark:bg-accent/80 dark:[a&]:hover:bg-accent/70",
 
         outline:
           "text-foreground border-accent/70 dark:border-accent/30 [a&]:hover:bg-accent [a&]:hover:text-accent-foreground",

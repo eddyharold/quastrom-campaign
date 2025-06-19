@@ -14,14 +14,26 @@ type PageHeaderProps = {
     className?: string;
     children?: string;
   };
+  navigateBackTo?: string;
   hideBackButton?: boolean;
 };
 
-export function PageHeader({ title, subtitle, children, classNames = {}, hideBackButton = false }: PageHeaderProps) {
+export function PageHeader({
+  title,
+  subtitle,
+  children,
+  classNames = {},
+  navigateBackTo,
+  hideBackButton = false,
+}: PageHeaderProps) {
   const navigate = useNavigate();
 
   const handleGoBack = () => {
-    navigate(-1);
+    if (navigateBackTo) {
+      navigate(navigateBackTo);
+    } else {
+      navigate(-1);
+    }
   };
 
   return (

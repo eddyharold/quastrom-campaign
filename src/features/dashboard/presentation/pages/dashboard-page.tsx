@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import {
   ArrowUpRight,
   ChevronRight,
@@ -8,20 +8,22 @@ import {
   Pause,
   Percent,
   Play,
+  Plus,
   Settings,
   TrendingUp,
   Users,
+  Wallet,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/presentation/components/ui/card";
 import { useLayoutContext } from "@/presentation/providers/layout-provider";
 import { Tabs, TabsList, TabsTrigger } from "@/presentation/components/ui/tabs";
-import { formatNumber } from "@/domain/utils/currency";
+import { formatCurrency, formatNumber } from "@/domain/utils/currency";
 import { PerformanceLineChart } from "../components/perfomance-line-chart";
 import { Button } from "@/presentation/components/ui/button";
 import { Badge } from "@/presentation/components/ui/badge";
 import { Link } from "react-router";
 import { RECENT_CAMPAIGNS } from "@/domain/data/campaign";
-import { allNotifications, NotificationCard } from "../components/notification-pannel";
+import { SystemAlert } from "../components/notification-pannel";
 
 // import { DashboardSkeleton } from "../components/dashboard-skeleton";
 
@@ -33,7 +35,7 @@ export default function DashboardPage() {
   const convertionRate = Math.round((totalConverted / totalLeads) * 100);
 
   // const { user } = useAuthContext();
-  const { updateBreadcrumb } = useLayoutContext();
+  const { updateBreadcrumb, updateNotificationState } = useLayoutContext();
 
   useEffect(() => {
     updateBreadcrumb([
@@ -61,14 +63,6 @@ export default function DashboardPage() {
     { date: "14/04", Clics: 62, Leads: 30, Conversions: 8 },
   ];
 
-  const [notifications, setNotifications] = useState(allNotifications);
-
-  const handleDismissNotification = (id: number) => {
-    setNotifications((prev) => prev.filter((notification) => notification.id !== id));
-  };
-  // Get latest 3 unread notifications for dashboard display
-  const dashboardNotifications = notifications.filter((n) => !n.read).slice(0, 3);
-
   return (
     <div className="space-y-6">
       <div className="space-y-1">
@@ -77,28 +71,6 @@ export default function DashboardPage() {
           Bienvenue sur votre espace affilié Quastrom. Analysez vos performances et gagnez plus.
         </p>
       </div>
-
-      {dashboardNotifications.length > 0 && (
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-medium text-gray-900">Notifications récentes</h3>
-            <Button variant="ghost" size="sm" className="text-sm text-muted-foreground hover:text-foreground">
-              Voir plus
-              <ChevronRight className="h-3 w-3 ml-1" />
-            </Button>
-          </div>
-
-          <div className="space-y-2">
-            {dashboardNotifications.map((notification) => (
-              <NotificationCard
-                key={notification.id}
-                notification={notification}
-                onDismiss={handleDismissNotification}
-              />
-            ))}
-          </div>
-        </div>
-      )}
 
       <div className="grid w-full gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
@@ -178,9 +150,50 @@ export default function DashboardPage() {
         </Card>
       </div>
 
+      <Card className="border-none bg-gradient-to-r from-primary dark:from-card to-primary/80 dark:to-primary/5 text-white">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Wallet className="h-6 w-6" />
+              <CardTitle>Solde du portefeuille</CardTitle>
+            </div>
+            <Button className="bg-white/80 hover:bg-white/90 text-primary dark:bg-primary/80 dark:hover:bg-primary/90 dark:text-primary-foreground">
+              <Plus />
+              Recharger
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2">
+            <div className="text-3xl font-bold">{formatCurrency(5000)}</div>
+            <p className="text-sm text-white/80 dark:text-muted-foreground flex items-center gap-1">
+              <Info className="text-warning size-3" /> Vous etes a 20% d'atteindre le seuil minimum de votre
+              portefeuille
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold">Notifications récentes</h2>
+          <Button
+            onClick={() => updateNotificationState(true)}
+            variant="ghost"
+            size="sm"
+            className="text-sm text-muted-foreground hover:text-foreground"
+          >
+            Voir plus
+            <ChevronRight />
+          </Button>
+        </div>
+
+        <SystemAlert />
+      </div>
+
       <Tabs defaultValue="jour">
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-semibold">Performance</h2>
+          <h2 className="text-lg font-semibold">Performance</h2>
 
           <TabsList size="sm">
             <TabsTrigger value="jour" className="w-24">
@@ -202,85 +215,63 @@ export default function DashboardPage() {
         </Card>
       </Tabs>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle>Campagnes récentes</CardTitle>
-            </div>
-            <Button asChild>
-              <Link to="/campaigns/create">Créer une campagne</Link>
-            </Button>
-          </CardHeader>
-          <CardContent>
-            <div className="divide-y">
-              {RECENT_CAMPAIGNS.map((campaign) => (
-                <div key={campaign.id} className="flex items-center justify-between py-4">
-                  <div className="flex items-center gap-4">
-                    <div className="flex flex-col gap-1.5">
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-medium">{campaign.name}</h3>
-                        <Badge variant={campaign.status === "active" ? "default" : "secondary"}>
-                          {campaign.status}
-                        </Badge>
-                      </div>
-                      <p className="text-sm text-muted-foreground flex items-center gap-1.5">
-                        <span>{campaign.category}</span>
-                        <span>•</span>
-                        <span>{campaign.leads} leads</span>
-                        <span>•</span>
-                        <span>{campaign.conversionRate}</span>% conversion rate
-                      </p>
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle>Campagnes récentes</CardTitle>
+          </div>
+          <Button asChild>
+            <Link to="/campaigns/create">Créer une campagne</Link>
+          </Button>
+        </CardHeader>
+        <CardContent>
+          <div className="divide-y">
+            {RECENT_CAMPAIGNS.map((campaign) => (
+              <div key={campaign.id} className="flex items-center justify-between py-4">
+                <div className="flex items-center gap-4">
+                  <div className="flex flex-col gap-1.5">
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-medium">{campaign.name}</h3>
+                      <Badge variant={campaign.status === "active" ? "default" : "secondary"}>{campaign.status}</Badge>
                     </div>
-                  </div>
-
-                  <div className="flex items-center gap-4">
-                    <div className="text-right">
-                      <p className="text-sm font-medium">
-                        ${campaign.spent.toLocaleString()} / ${campaign.budget.toLocaleString()}
-                      </p>
-                      <div className="w-24 h-2 bg-gray-200 rounded-full mt-1">
-                        <div
-                          className="h-2 bg-blue-500 rounded-full"
-                          style={{ width: `${(campaign.spent / campaign.budget) * 100}%` }}
-                        />
-                      </div>
-                    </div>
-
-                    <div className="flex items-center">
-                      <Button variant="ghost">
-                        <Eye />
-                      </Button>
-                      <Button variant="ghost">{campaign.status === "active" ? <Pause /> : <Play />}</Button>
-                      <Button variant="ghost">
-                        <Settings />
-                      </Button>
-                    </div>
+                    <p className="text-sm text-muted-foreground flex items-center gap-1.5">
+                      <span>{campaign.category}</span>
+                      <span>•</span>
+                      <span>{campaign.leads} leads</span>
+                      <span>•</span>
+                      <span>{campaign.conversionRate}</span>% conversion rate
+                    </p>
                   </div>
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
 
-        <Card className="h-fit">
-          <CardHeader>
-            <CardTitle>Solde actuel</CardTitle>
-          </CardHeader>
+                <div className="flex items-center gap-4">
+                  <div className="text-right">
+                    <p className="text-sm font-medium">
+                      ${campaign.spent.toLocaleString()} / ${campaign.budget.toLocaleString()}
+                    </p>
+                    <div className="w-24 h-2 bg-gray-200 rounded-full mt-1">
+                      <div
+                        className="h-2 bg-blue-500 rounded-full"
+                        style={{ width: `${(campaign.spent / campaign.budget) * 100}%` }}
+                      />
+                    </div>
+                  </div>
 
-          <CardContent className="space-y-8">
-            <div className="text-5xl font-bold">8,750 €</div>
-
-            <div className="bg-warning/5 rounded-md border h-14 px-3 shadow-lg flex items-center justify-between gap-6">
-              <Info className="mt-0.5 shrink-0 text-warning" size={16} aria-hidden="true" />
-              <div className="flex grow items-center justify-between gap-12">
-                <p className="text-sm">Votre solde a atteint le seuil minimum défini</p>
-                <Button size="sm">Recharger</Button>
+                  <div className="flex items-center">
+                    <Button variant="ghost">
+                      <Eye />
+                    </Button>
+                    <Button variant="ghost">{campaign.status === "active" ? <Pause /> : <Play />}</Button>
+                    <Button variant="ghost">
+                      <Settings />
+                    </Button>
+                  </div>
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

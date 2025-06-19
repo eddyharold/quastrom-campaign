@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { ArrowDownRight, ArrowUpRight, Loader, Plus, Wallet } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, Info, Loader, Plus, Wallet } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/presentation/components/ui/card";
 import { useLayoutContext } from "@/presentation/providers/layout-provider";
 import { formatCurrency, formatNumber } from "@/domain/utils/currency";
@@ -38,23 +38,26 @@ export default function TransactionListPage() {
 
   return (
     <div className="space-y-6">
-      <Card className="bg-gradient-to-r from-primary dark:from-card to-primary/80 dark:to-primary/5 text-white">
+      <Card className="border-none bg-gradient-to-r from-primary dark:from-card to-primary/80 dark:to-primary/5 text-white">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Wallet className="h-6 w-6" />
               <CardTitle>Solde du portefeuille</CardTitle>
             </div>
-            <Button>
+            <Button className="bg-white/80 hover:bg-white/90 text-primary dark:bg-primary/80 dark:hover:bg-primary/90 dark:text-primary-foreground">
               <Plus />
-              Recharger le portefeuille
+              Recharger
             </Button>
           </div>
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
             <div className="text-3xl font-bold">{formatCurrency(walletBalance)}</div>
-            <p className="text-sm text-muted-foreground">Disponible pour les dépenses de campagne</p>
+            <p className="text-sm text-white/80 dark:text-muted-foreground flex items-center gap-1">
+              <Info className="text-warning size-3" /> Vous etes a 20% d'atteindre le seuil minimum de votre
+              portefeuille
+            </p>
           </div>
         </CardContent>
       </Card>
