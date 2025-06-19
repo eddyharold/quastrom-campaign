@@ -1,730 +1,1060 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/presentation/components/ui/card";
-import { Button } from "@/presentation/components/ui/button";
-import { Input } from "@/presentation/components/ui/input";
-import { Label } from "@/presentation/components/ui/label";
-import { Textarea } from "@/presentation/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/presentation/components/ui/select";
-import { Checkbox } from "@/presentation/components/ui/checkbox";
-import { Badge } from "@/presentation/components/ui/badge";
-import { Alert, AlertDescription } from "@/presentation/components/ui/alert";
-import { Progress } from "@/presentation/components/ui/progress";
+"use client"
+
+import { useState } from "react"
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/presentation/components/ui/card"
+import { Button } from "@/presentation/components/ui/button"
+import { Input } from "@/presentation/components/ui/input"
+import { Label } from "@/presentation/components/ui/label"
+import { Textarea } from "@/presentation/components/ui/textarea"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/presentation/components/ui/select"
+import { Checkbox } from "@/presentation/components/ui/checkbox"
 import {
   ArrowLeft,
   ArrowRight,
   Upload,
   FileText,
-  ImageIcon,
-  Video,
-  Globe,
-  DollarSign,
   Target,
-  Calendar,
-  Info,
   CheckCircle,
   Phone,
-  AlertTriangle,
-} from "lucide-react";
+  CalendarDays,
+  Calculator,
+  ShoppingCart,
+  Package,
+  Palette,
+  Users,
+} from "lucide-react"
 
 const steps = [
-  { id: 1, title: "General Information", description: "Basic campaign details" },
-  {
-    id: 2,
-    title: "Campaign Objectives, Budget & Conversion Rules",
-    description: "Define objectives, budget and commission structure",
-  },
-  { id: 3, title: "Creatives", description: "Upload or create assets" },
-  { id: 4, title: "Review & Launch", description: "Final review and launch" },
+  { number: 1, title: "Informations", icon: FileText, description: "Renseignez les informations principales de votre campagne." },
+  { number: 2, title: "Objectif", icon: Target, description: "Choisissez un objectif pour votre campagne." },
+  { number: 3, title: "Budget", icon: Calculator, description: "Définissez le budget et les règles de conversion." },
+  { number: 4, title: "Créatifs", icon: Palette, description: "Ajoutez les éléments créatifs." },
+  { number: 5, title: "Récapitulatif", icon: Package, description: "Vérifiez et validez votre campagne." },
 ];
 
 const campaignObjectives = [
   {
-    id: "raw-leads",
-    title: "Generate Raw Leads",
-    description: "Basic leads for initial contact",
-    estimatedCost: 15,
-    icon: Target,
-    tooltip: "Unqualified leads that require follow-up and nurturing. Best for building your prospect database.",
-  },
-  {
-    id: "qualified-appointments",
-    title: "Generate Qualified Appointments",
-    description: "Pre-screened leads ready for a sales call",
-    estimatedCost: 45,
-    icon: Calendar,
-    tooltip: "Leads that have been pre-qualified and are ready for a sales conversation. Higher conversion potential.",
-  },
-  {
-    id: "callback-requests",
-    title: "Callback Requests",
-    description: "Prospects requesting a quick phone callback",
-    estimatedCost: 25,
-    icon: Phone,
-    tooltip: "Leads who have expressed immediate interest and want to be contacted by phone within 24 hours.",
-  },
-  {
-    id: "quote-demands",
-    title: "Quote Demands",
-    description: "Users actively seeking a price quote",
+    id: "lead-generation",
+    title: "Génération de leads simples",
+    description: "Collecte de contacts qualifiés pour votre entreprise",
     estimatedCost: 35,
-    icon: DollarSign,
-    tooltip: "High-intent leads who are actively comparing prices and ready to make a purchasing decision.",
+    icon: Target,
+    tooltip: "Coût estimé par lead généré."
   },
-];
+  {
+    id: "appointment",
+    title: "Rendez-vous qualifiés",
+    description: "Génération de RDV commerciaux qualifiés",
+    estimatedCost: 45,
+    icon: CalendarDays,
+    tooltip: "Coût estimé par rendez-vous pris."
+  },
+  {
+    id: "callback",
+    title: "Appels / Rappels",
+    description: "Demandes de contact téléphonique",
+    estimatedCost: 30,
+    icon: Phone,
+    tooltip: "Coût estimé par appel/rappel."
+  },
+  {
+    id: "quote",
+    title: "Demande de devis",
+    description: "Collecte de demandes de devis qualifiées",
+    estimatedCost: 50,
+    icon: Calculator,
+    tooltip: "Coût estimé par devis qualifié."
+  },
+  {
+    id: "conversion",
+    title: "Conversion commerciale",
+    description: "Paiement uniquement sur vente confirmée",
+    estimatedCost: 0,
+    icon: ShoppingCart,
+    tooltip: "Paiement uniquement sur vente confirmée."
+  },
+]
+
+
 
 const btpCategories = [
-  "Technology & Software",
-  "Healthcare & Medical",
-  "Financial Services",
-  "Real Estate",
-  "Education & Training",
-  "Manufacturing",
-  "Professional Services",
-  "Retail & E-commerce",
+  "Maçonnerie",
+  "Plomberie",
+  "Électricité",
+  "Peinture",
+  "Menuiserie",
+  "Charpente",
+  "Couverture",
+  "Plâtrerie",
+  "Carrelage",
+  "Chauffage",
+  "Autre",
 ];
 
+type CampaignData = {
+  name: string;
+  description: string;
+  objectiveType: "qualification" | "classic";
+  classicObjective: string;
+  hasQualificationFile: boolean;
+  qualificationFile: File | null;
+  budget: string;
+  budgetType: string;
+  hasCreatives: boolean;
+  commissionModel: string;
+  commissionValue: string;
+  eligibilityConditions: string[];
+  logo: File | null;
+  brandGuidelines: File | null;
+  websiteUrl: string;
+  additionalVisuals: File[];
+  creativeSupports: string[];
+  creativeElements: string[];
+  walletBalance: number;
+  conversionStatuses: string[];
+  startDate?: string;
+  endDate?: string;
+  category?: string;
+};
+
 export default function CreateCampaign() {
-  const [currentStep, setCurrentStep] = useState(1);
-  const [formData, setFormData] = useState({
+  const [currentStep, setCurrentStep] = useState(1)
+  const [campaignData, setCampaignData] = useState<CampaignData>({
     name: "",
     description: "",
-    startDate: "",
-    endDate: "",
-    category: "",
-    objective: "",
+    objectiveType: "classic" as "qualification" | "classic",
+    classicObjective: "",
+    hasQualificationFile: false,
+    qualificationFile: null,
     budget: "",
     budgetType: "total",
-    dailyBudgetCap: false,
-    hasCreatives: null,
-    uploadedFiles: [],
-    commissionModel: "fixed",
+    hasCreatives: false,
+    commissionModel: "",
     commissionValue: "",
-    conversionStatuses: [],
-    walletBalance: 2500, // Mock wallet balance
-  });
+    eligibilityConditions: [],
+    logo: null,
+    brandGuidelines: null,
+    websiteUrl: "",
+    additionalVisuals: [],
+    creativeSupports: [],
+    creativeElements: ["announcement"],
+    walletBalance: 1250,
+    conversionStatuses: []
+  })
+
+  const nextStep = () => {
+    if (currentStep < 5) setCurrentStep(currentStep + 1)
+  }
+
+  const prevStep = () => {
+    if (currentStep > 1) setCurrentStep(currentStep - 1)
+  }
 
   const progress = (currentStep / steps.length) * 100;
 
-  const handleNext = () => {
-    if (currentStep < steps.length) {
-      setCurrentStep(currentStep + 1);
-    }
-  };
+  const handleNext = () => nextStep();
+  const handlePrevious = () => prevStep();
 
-  const handlePrevious = () => {
-    if (currentStep > 1) {
-      setCurrentStep(currentStep - 1);
-    }
-  };
-
-  const selectedObjective = campaignObjectives.find((obj) => obj.id === formData.objective);
-  const estimatedLeads =
-    formData.budget && selectedObjective
-      ? Math.floor(Number.parseInt(formData.budget) / selectedObjective.estimatedCost)
-      : 0;
+  const renderStepIndicator = () => (
+    <div className="flex items-center justify-between gap-2 mt-2">
+      {steps.map((step, idx) => {
+        // Define the state of each step
+        const isCompleted = currentStep > step.number;
+        const isCurrent = currentStep === step.number;
+        const isPending = currentStep < step.number;
+        
+        return (
+          <div key={step.number} className="flex items-center gap-1 flex-1">
+            {/* Step Circle */}
+            <div
+              className={`rounded-full flex items-center justify-center border-2 transition-all h-8 w-8 shrink-0
+                ${isCompleted ? "bg-primary border-primary text-white" : ""}
+                ${isCurrent ? "border-primary bg-white text-primary ring-2 ring-primary/20" : ""}
+                ${isPending ? "border-gray-300 bg-white text-gray-400" : ""}`}
+            >
+              {isCompleted ? (
+                <CheckCircle className="w-5 h-5" />
+              ) : (
+                <step.icon className="w-5 h-5" />
+              )}
+            </div>
+            
+            {/* Step Title */}
+            <span 
+              className={`text-xs font-medium
+                ${isCompleted ? "text-primary" : ""}
+                ${isCurrent ? "text-primary font-semibold" : ""}
+                ${isPending ? "text-gray-400" : ""}`}
+            >
+              {step.title}
+            </span>
+            
+            {/* Connector Line */}
+            {idx !== steps.length - 1 && (
+              <div 
+                className={`flex-1 h-1 mx-1 transition-all
+                  ${isCompleted ? "bg-primary" : "bg-gray-200"}`}
+              />
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
 
   return (
-    <div className="flex-1 overflow-auto p-6">
-      <div className="max-w-4xl   mx-auto space-y-6">
-        {/* Progress */}
-        <Card>
-          <CardContent className="pt-6">
-            <div className="space-y-4">
-              <div className="flex justify-between text-sm">
-                <span>
-                  Step {currentStep} of {steps.length}
-                </span>
-                <span>{Math.round(progress)}% Complete</span>
-              </div>
-              <Progress value={progress} className="h-2" />
-              <div className="flex justify-between">
-                {steps.map((step) => (
-                  <div
-                    key={step.id}
-                    className={`flex flex-col items-center text-center ${
-                      step.id <= currentStep ? "text-primary" : "text-muted-foreground"
-                    }`}
-                  >
-                    <div
-                      className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                        step.id < currentStep
-                          ? "bg-primary text-primary-foreground"
-                          : step.id === currentStep
-                          ? "bg-primary/10 text-primary border-2 border-primary"
-                          : "bg-muted text-muted-foreground"
-                      }`}
-                    >
-                      {step.id < currentStep ? <CheckCircle className="h-4 w-4" /> : step.id}
-                    </div>
-                    <div className="mt-2 hidden sm:block">
-                      <p className="text-xs font-medium">{step.title}</p>
-                      <p className="text-xs text-muted-foreground">{step.description}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Step Content */}
-        <Card>
-          <CardHeader>
-            <CardTitle>{steps[currentStep - 1].title}</CardTitle>
-            <CardDescription>{steps[currentStep - 1].description}</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Step 1: General Information */}
-            {currentStep === 1 && (
+    <div className="flex flex-col h-screen bg-gray-50/50">
+      <div className="flex-1 overflow-auto p-6">
+        <div className="max-w-4xl mx-auto space-y-6">
+          {/* Progress */}
+          <Card>
+            <CardContent className="pt-6">
               <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="campaign-name">Campaign Name</Label>
-                  <Input
-                    id="campaign-name"
-                    placeholder="Enter campaign name"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  />
+                <div className="flex justify-between text-sm">
+                  <span>
+                    Step {currentStep} of {steps.length}
+                  </span>
+                  <span>{Math.round(progress)}% Complete</span>
                 </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="description">Description</Label>
-                  <Textarea
-                    id="description"
-                    placeholder="Describe your campaign objectives and target audience"
-                    rows={4}
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="start-date">Start Date</Label>
-                    <Input
-                      id="start-date"
-                      type="date"
-                      value={formData.startDate}
-                      onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="end-date">End Date</Label>
-                    <Input
-                      id="end-date"
-                      type="date"
-                      value={formData.endDate}
-                      onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>BTP Category</Label>
-                  <Select
-                    value={formData.category}
-                    onValueChange={(value) => setFormData({ ...formData, category: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select your business sector" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {btpCategories.map((category) => (
-                        <SelectItem key={category} value={category}>
-                          {category}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                {renderStepIndicator()}
               </div>
-            )}
+            </CardContent>
+          </Card>
 
-            {/* Step 2: Campaign Objectives, Budget & Conversion Rules */}
-            {currentStep === 2 && (
-              <div className="space-y-8">
-                {/* Campaign Objective */}
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg font-medium">🧭 Campaign Objective</span>
-                    <span className="text-sm text-muted-foreground">(select one)</span>
+          {/* Step Content */}
+          <Card>
+            <CardHeader>
+              <CardTitle>{steps[currentStep - 1].title}</CardTitle>
+              <CardDescription>{steps[currentStep - 1].description}</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Step 1: General Information */}
+              {currentStep === 1 && (
+                <form className="space-y-4">
+                  <div>
+                    <Label htmlFor="name">Campaign Name</Label>
+                    <Input
+                      id="name"
+                      placeholder="Enter campaign name"
+                      value={campaignData.name}
+                      onChange={(e) => setCampaignData({ ...campaignData, name: e.target.value })}
+                    />
+                    <p className="text-xs text-muted-foreground">This is the public name of your campaign.</p>
+                  </div>
+                  <div>
+                    <Label htmlFor="description">Description</Label>
+                    <Textarea
+                      id="description"
+                      placeholder="Describe your campaign objectives and target audience"
+                      rows={4}
+                      value={campaignData.description}
+                      onChange={(e) => setCampaignData({ ...campaignData, description: e.target.value })}
+                    />
+                    <p className="text-xs text-muted-foreground">Describe your campaign objectives and target audience.</p>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {campaignObjectives.map((objective) => (
-                      <div
-                        key={objective.id}
-                        className={`p-4 border rounded-lg cursor-pointer transition-all ${
-                          formData.objective === objective.id
-                            ? "border-primary bg-primary/5 ring-2 ring-primary/20"
-                            : "border-border hover:border-primary/50"
-                        }`}
-                        onClick={() => setFormData({ ...formData, objective: objective.id })}
-                      >
-                        <div className="flex items-start gap-3">
-                          <objective.icon className="h-5 w-5 text-primary mt-0.5" />
-                          <div className="flex-1">
+                    <div>
+                      <Label htmlFor="startDate">Start Date</Label>
+                      <Input
+                        id="startDate"
+                        type="date"
+                        value={campaignData.startDate}
+                        onChange={(e) => setCampaignData({ ...campaignData, startDate: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="endDate">End Date</Label>
+                      <Input
+                        id="endDate"
+                        type="date"
+                        value={campaignData.endDate}
+                        onChange={(e) => setCampaignData({ ...campaignData, endDate: e.target.value })}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <Label htmlFor="category">BTP Category</Label>
+                    <Select
+                      value={campaignData.category}
+                      onValueChange={(value) => setCampaignData({ ...campaignData, category: value })}
+                    >
+                      <SelectTrigger id="category">
+                        <SelectValue placeholder="Select your business sector" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {btpCategories.map((category) => (
+                          <SelectItem key={category} value={category}>
+                            {category}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </form>
+              )}
+
+              {/* Step 2: Campaign Objectives */}
+              {currentStep === 2 && (
+                <div className="space-y-8">
+                  {/* Header */}
+                  <div className="text-center space-y-2">
+                    <h2 className="text-2xl font-semibold">Choix de l'objectif</h2>
+                    <p className="text-muted-foreground">Sélectionnez le type de campagne qui correspond à vos besoins</p>
+                  </div>
+
+                  {/* Qualification Option */}
+                  <div className="bg-amber-50 rounded-lg p-6 border border-amber-100">
+                    <div className="flex gap-4">
+                      <div className="bg-amber-100 rounded-full p-3 h-12 w-12 flex items-center justify-center">
+                        <Users className="h-6 w-6 text-amber-600" />
+                      </div>
+                      <div className="space-y-2 flex-1">
+                        <h3 className="font-medium text-lg">Qualification de contacts existants</h3>
+                        <p className="text-sm text-muted-foreground">Téléversez votre fichier de contacts à qualifier. Aucun lead externe ne sera généré.</p>
+                        
+                        <div className="flex items-center space-x-2 mt-2">
+                          <input 
+                            type="radio" 
+                            id="qualification-option" 
+                            className="rounded-full text-primary"
+                            checked={campaignData.objectiveType === "qualification"}
+                            onChange={() => setCampaignData({ 
+                              ...campaignData, 
+                              objectiveType: "qualification",
+                              classicObjective: ""
+                            })}
+                          />
+                          <label htmlFor="qualification-option" className="text-sm font-medium">Choisir cette option</label>
+                        </div>
+
+                        {campaignData.objectiveType === "qualification" && (
+                          <div className="mt-4">
+                            <div className="border border-dashed border-amber-300 rounded-lg p-6 bg-white">
+                              <div className="flex flex-col items-center justify-center text-center space-y-4">
+                                <div className="text-amber-500">
+                                  <Upload className="h-10 w-10" />
+                                </div>
+                                <div>
+                                  <h4 className="font-medium">Glissez votre fichier ici ou cliquez pour sélectionner</h4>
+                                  <p className="text-sm text-muted-foreground mt-1">Formats acceptés: .xls, .xlsx, .csv (max 10 Mo)</p>
+                                </div>
+                                <Button 
+                                  variant="outline" 
+                                  className="border-amber-300 text-amber-700 hover:bg-amber-50"
+                                  onClick={() => {
+                                    // This would normally trigger a file input
+                                    document.getElementById('file-upload')?.click();
+                                  }}
+                                >
+                                  Sélectionner un fichier
+                                </Button>
+                                <input 
+                                  type="file" 
+                                  id="file-upload" 
+                                  className="hidden" 
+                                  accept=".xls,.xlsx,.csv"
+                                  onChange={(e) => {
+                                    if (e.target.files && e.target.files[0]) {
+                                      setCampaignData({
+                                        ...campaignData,
+                                        qualificationFile: e.target.files[0]
+                                      });
+                                    }
+                                  }}
+                                />
+                              </div>
+                            </div>
+                            {campaignData.qualificationFile && (
+                              <div className="mt-2 text-sm text-green-600 flex items-center gap-1">
+                                <CheckCircle className="h-4 w-4" />
+                                <span>Fichier sélectionné: {campaignData.qualificationFile.name}</span>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Classic Objectives */}
+                  <div className="space-y-4">
+                    <h3 className="font-semibold text-lg">Objectifs classiques</h3>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {campaignObjectives.map((objective) => (
+                        <div
+                          key={objective.id}
+                          className={`border rounded-lg cursor-pointer transition-all relative ${
+                            campaignData.objectiveType === "classic" && campaignData.classicObjective === objective.id
+                              ? "border-primary bg-primary/5"
+                              : "border-gray-200 hover:border-primary/50"
+                          }`}
+                          onClick={() => setCampaignData({ 
+                            ...campaignData, 
+                            objectiveType: "classic",
+                            classicObjective: objective.id 
+                          })}
+                        >
+                          {campaignData.objectiveType === "classic" && campaignData.classicObjective === objective.id && (
+                            <div className="absolute top-2 right-2 text-primary">
+                              <CheckCircle className="h-5 w-5" />
+                            </div>
+                          )}
+                          <div className="p-4">
+                            <div className="bg-gray-100 rounded-lg p-2 w-10 h-10 flex items-center justify-center mb-3">
+                              <objective.icon className="h-5 w-5" />
+                            </div>
                             <h3 className="font-medium">{objective.title}</h3>
                             <p className="text-sm text-muted-foreground mt-1">{objective.description}</p>
-                            <div className="flex items-center gap-2 mt-2">
-                              <Badge variant="secondary">~${objective.estimatedCost} per lead</Badge>
-                              <div className="group relative">
-                                <Info className="h-4 w-4 text-muted-foreground cursor-help" />
-                                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none w-64 z-10">
-                                  {objective.tooltip}
-                                </div>
-                              </div>
+                            <div className="mt-3 text-sm font-medium text-muted-foreground">
+                              {objective.estimatedCost > 0 ? `~${objective.estimatedCost} €` : ""}
                             </div>
                           </div>
                         </div>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  {/* Commission Model - Only shown when Conversion commerciale is selected */}
+                  {campaignData.objectiveType === "classic" && campaignData.classicObjective === "conversion" && (
+                    <div 
+                      className="bg-primary rounded-lg p-6 border border-amber-100 mt-6 text-white animate-in fade-in slide-in-from-bottom-5 duration-500"
+                      style={{ animationFillMode: 'forwards' }}
+                    >
+                      <h3 className="font-semibold text-lg mb-4">Modèle de commission</h3>
+                      
+                      <div className="space-y-4">
+                        <div className="flex items-center space-x-2">
+                          <input 
+                            type="radio" 
+                            id="fixed-amount" 
+                            name="commission-model"
+                            className="rounded-full text-primary"
+                            checked={campaignData.commissionModel === "fixed"}
+                            onChange={() => setCampaignData({ 
+                              ...campaignData, 
+                              commissionModel: "fixed" 
+                            })}
+                          />
+                          <label htmlFor="fixed-amount" className="text-sm font-medium">Montant fixe</label>
+                        </div>
+                        
+                        <div className="flex items-center space-x-2">
+                          <input 
+                            type="radio" 
+                            id="percentage" 
+                            name="commission-model"
+                            className="rounded-full text-primary"
+                            checked={campaignData.commissionModel === "percentage"}
+                            onChange={() => setCampaignData({ 
+                              ...campaignData, 
+                              commissionModel: "percentage" 
+                            })}
+                          />
+                          <label htmlFor="percentage" className="text-sm font-medium">Pourcentage de la vente</label>
+                        </div>
+                        
+                        {campaignData.commissionModel && (
+                          <div className="mt-4">
+                            <Label htmlFor="commission-value">
+                              {campaignData.commissionModel === "fixed" ? "Montant (€)" : "Pourcentage (%)"}:
+                            </Label>
+                            <Input
+                              id="commission-value"
+                              type="number"
+                              placeholder={campaignData.commissionModel === "fixed" ? "ex: 50" : "ex: 10"}
+                              value={campaignData.commissionValue}
+                              onChange={(e) => setCampaignData({ ...campaignData, commissionValue: e.target.value })}
+                              className="mt-1 max-w-xs bg-white"
+                            />
+                          </div>
+                        )}
                       </div>
-                    ))}
-                  </div>
+                    </div>
+                  )}
+
+                 
                 </div>
+              )}
 
-                {/* Campaign Budget */}
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg font-medium">💰 Campaign Budget</span>
+              {/* Step 3: Budget & Lead Validation */}
+              {currentStep === 3 && (
+                <div className="space-y-8">
+                  {/* Header */}
+                  <div className="text-center space-y-2">
+                    <h2 className="text-2xl font-semibold">Budget & validation du lead</h2>
+                    <p className="text-muted-foreground">Définissez votre budget et les conditions de validation</p>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="budget">Total Budget ($)</Label>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    {/* Budget Section */}
+                    <div className="bg-white p-6 rounded-lg border shadow-sm">
+                      <h3 className="font-semibold text-lg mb-6">Budget total</h3>
+                      
+                      <div className="relative">
                         <Input
                           id="budget"
                           type="number"
-                          placeholder="Enter your budget"
-                          value={formData.budget}
-                          onChange={(e) => setFormData({ ...formData, budget: e.target.value })}
+                          placeholder="Entrez votre budget"
+                          value={campaignData.budget}
+                          onChange={(e) => setCampaignData({ ...campaignData, budget: e.target.value })}
+                          className="pr-10 h-12 text-right"
                         />
-                      </div>
-
-                      <div className="flex items-center space-x-2">
-                        <Checkbox
-                          id="daily-budget-cap"
-                          checked={formData.dailyBudgetCap}
-                          onCheckedChange={(checked) =>
-                            setFormData({ ...formData, dailyBudgetCap: checked as boolean })
-                          }
-                        />
-                        <Label htmlFor="daily-budget-cap">Enable Daily Budget Cap</Label>
-                      </div>
-                    </div>
-
-                    <div className="space-y-4">
-                      {formData.budget && selectedObjective && (
-                        <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                          <h4 className="font-medium text-blue-900 mb-2">Budget Breakdown</h4>
-                          <div className="space-y-1 text-sm text-blue-800">
-                            <p>
-                              <strong>Estimated Cost per Lead:</strong> ${selectedObjective.estimatedCost}
-                            </p>
-                            <p>
-                              <strong>Estimated Lead Volume:</strong> ~{estimatedLeads} leads
-                            </p>
-                            <p className="text-xs text-blue-600 mt-2">
-                              Estimates based on historical data for {selectedObjective.title.toLowerCase()}
-                            </p>
-                          </div>
+                        <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                          <span className="text-gray-500">€</span>
                         </div>
-                      )}
+                      </div>
                     </div>
-                  </div>
-                </div>
 
-                {/* Commission Trigger Logic */}
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg font-medium">🎯 Commission Trigger Logic</span>
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    Select the conditions that must be met for a lead to be considered payable to an affiliate.
-                  </p>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {[
-                      {
-                        id: "signed-quote",
-                        label: "Signed Quote",
-                        description: "Customer has signed a quote or contract",
-                        tooltip: "Lead becomes payable when customer signs a formal quote or contract document",
-                      },
-                      {
-                        id: "confirmed-sale",
-                        label: "Confirmed Sale",
-                        description: "Sale has been confirmed and processed",
-                        tooltip: "Lead becomes payable when the sale is completed and payment is processed",
-                      },
-                      {
-                        id: "appointment-booked",
-                        label: "Appointment Booked",
-                        description: "Customer has booked a sales appointment",
-                        tooltip: "Lead becomes payable when customer schedules and confirms a sales meeting",
-                      },
-                      {
-                        id: "qualified-lead",
-                        label: "Qualified Lead Sheet",
-                        description: "Lead has been qualified through our process",
-                        tooltip: "Lead becomes payable when it passes your qualification criteria and requirements",
-                      },
-                    ].map((status) => (
-                      <div
-                        key={status.id}
-                        className="flex items-start space-x-3 p-4 border rounded-lg hover:bg-gray-50/50"
-                      >
-                        <Checkbox
-                          id={status.id}
-                          checked={formData.conversionStatuses.includes(status.id as never)}
-                          onCheckedChange={(checked) => {
-                            if (checked) {
-                              setFormData({
-                                ...formData,
-                                conversionStatuses: [...formData.conversionStatuses, status.id as never],
-                              });
-                            } else {
-                              setFormData({
-                                ...formData,
-                                conversionStatuses: formData.conversionStatuses.filter((s) => s !== status.id),
-                              });
-                            }
-                          }}
-                        />
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            <Label htmlFor={status.id} className="font-medium">
-                              {status.label}
-                            </Label>
-                            <div className="group relative">
-                              <Info className="h-4 w-4 text-muted-foreground cursor-help" />
-                              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none w-64 z-10">
-                                {status.tooltip}
+                    {/* Validation Conditions */}
+                    <div className="bg-white p-6 rounded-lg border shadow-sm">
+                      <h3 className="font-semibold text-lg mb-6">Conditions de validation</h3>
+                      
+                      <div className="space-y-4">
+                        {[
+                          {
+                            id: "signed-quote",
+                            label: "Devis signé",
+                            description: "Le prospect a accepté une estimation"
+                          },
+                          {
+                            id: "appointment-booked",
+                            label: "RDV pris",
+                            description: "Un créneau a été réservé pour échange"
+                          },
+                          {
+                            id: "confirmed-sale",
+                            label: "Vente confirmée",
+                            description: "Action commerciale réalisée"
+                          },
+                          {
+                            id: "qualified-lead",
+                            label: "Fiche qualifiée",
+                            description: "Lead validé manuellement ou via scoring"
+                          }
+                        ].map((condition) => {
+                          const isSelected = campaignData.eligibilityConditions.includes(condition.id);
+                          return (
+                            <div 
+                              key={condition.id} 
+                              className={`border rounded-lg p-4 transition-all duration-200 ${isSelected ? 'border-primary bg-primary/5 shadow-sm' : 'border-gray-200'}`}
+                              onClick={() => {
+                                if (isSelected) {
+                                  setCampaignData({
+                                    ...campaignData,
+                                    eligibilityConditions: campaignData.eligibilityConditions.filter(
+                                      (id) => id !== condition.id
+                                    ),
+                                  });
+                                } else {
+                                  setCampaignData({
+                                    ...campaignData,
+                                    eligibilityConditions: [...campaignData.eligibilityConditions, condition.id],
+                                  });
+                                }
+                              }}
+                            >
+                              <div className="flex items-start space-x-3">
+                                <Checkbox
+                                  id={condition.id}
+                                  checked={isSelected}
+                                  onCheckedChange={(checked) => {
+                                    if (checked && checked !== "indeterminate") {
+                                      setCampaignData({
+                                        ...campaignData,
+                                        eligibilityConditions: [...campaignData.eligibilityConditions, condition.id],
+                                      })
+                                    } else {
+                                      setCampaignData({
+                                        ...campaignData,
+                                        eligibilityConditions: campaignData.eligibilityConditions.filter(
+                                          (id) => id !== condition.id
+                                        ),
+                                      })
+                                    }
+                                  }}
+                                />
+                                <div>
+                                  <Label htmlFor={condition.id} className="font-medium cursor-pointer">
+                                    {condition.label}
+                                  </Label>
+                                  <p className="text-sm text-muted-foreground mt-1">{condition.description}</p>
+                                </div>
                               </div>
                             </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Step 4: Creatives */}
+              {currentStep === 4 && (
+                <div className="space-y-8">
+                  {/* Header */}
+                  <div className="text-center space-y-2">
+                    <h2 className="text-2xl font-semibold">Éléments créatifs & identité visuelle</h2>
+                    <p className="text-muted-foreground">Personnalisez l'apparence de votre campagne</p>
+                  </div>
+                  
+                  {/* Info Alert */}
+                  <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 flex items-start gap-3">
+                    <div className="text-blue-500 mt-0.5">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                    </div>
+                    <p className="text-sm text-blue-700">
+                      Certains éléments créatifs peuvent être nécessaires pour votre campagne. Nous pouvons les réaliser pour vous selon votre charte graphique.
+                    </p>
+                  </div>
+                  
+                  {/* Visual Identity Section */}
+                  <div className="bg-white border rounded-lg p-6 shadow-sm">
+                    <h3 className="font-semibold text-lg mb-6">Identité visuelle (obligatoire)</h3>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {/* Logo Upload */}
+                      <div>
+                        <p className="text-sm font-medium mb-2">Téléversement du logo</p>
+                        <p className="text-xs text-muted-foreground mb-3">Fichier au format PDF, PNG, JPG ou SVG - max 3 Mo</p>
+                        
+                        <div className="border-2 border-dashed rounded-lg p-6 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-gray-50 transition-colors">
+                          <div className="mb-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                           </div>
-                          <p className="text-sm text-muted-foreground mt-1">{status.description}</p>
+                          <p className="text-sm font-medium">Sélectionnez un fichier</p>
+                          <input
+                            type="file"
+                            id="logo-upload"
+                            className="hidden"
+                            accept=".pdf,.png,.jpg,.jpeg,.svg"
+                            onChange={(e) => {
+                              if (e.target.files && e.target.files[0]) {
+                                setCampaignData({
+                                  ...campaignData,
+                                  logo: e.target.files[0]
+                                });
+                              }
+                            }}
+                          />
                         </div>
                       </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Commission Model */}
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg font-medium">📐 Commission Model</span>
-                  </div>
-                  <p className="text-sm text-muted-foreground">Select how you want to reward affiliates:</p>
-
-                  <div className="space-y-3">
-                    <div
-                      className={`p-4 border rounded-lg cursor-pointer transition-all ${
-                        formData.commissionModel === "fixed"
-                          ? "border-primary bg-primary/5"
-                          : "border-border hover:border-primary/50"
-                      }`}
-                      onClick={() => setFormData({ ...formData, commissionModel: "fixed" })}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div
-                          className={`w-4 h-4 rounded-full border-2 ${
-                            formData.commissionModel === "fixed" ? "border-primary bg-primary" : "border-gray-300"
-                          }`}
-                        >
-                          {formData.commissionModel === "fixed" && (
-                            <div className="w-2 h-2 bg-white rounded-full m-0.5" />
-                          )}
-                        </div>
-                        <div className="flex-1">
-                          <h3 className="font-medium">Fixed amount per conversion</h3>
-                          <p className="text-sm text-muted-foreground">e.g., $45 per qualified appointment</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div
-                      className={`p-4 border rounded-lg cursor-pointer transition-all ${
-                        formData.commissionModel === "percentage"
-                          ? "border-primary bg-primary/5"
-                          : "border-border hover:border-primary/50"
-                      }`}
-                      onClick={() => setFormData({ ...formData, commissionModel: "percentage" })}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div
-                          className={`w-4 h-4 rounded-full border-2 ${
-                            formData.commissionModel === "percentage" ? "border-primary bg-primary" : "border-gray-300"
-                          }`}
-                        >
-                          {formData.commissionModel === "percentage" && (
-                            <div className="w-2 h-2 bg-white rounded-full m-0.5" />
-                          )}
-                        </div>
-                        <div className="flex-1">
-                          <h3 className="font-medium">Percentage of sale</h3>
-                          <p className="text-sm text-muted-foreground">e.g., 10% for confirmed sale</p>
+                      
+                      {/* Brand Guidelines Upload */}
+                      <div>
+                        <p className="text-sm font-medium mb-2">Charte graphique</p>
+                        <p className="text-xs text-muted-foreground mb-3">Document de référence contenant vos couleurs, typographies, visuals</p>
+                        
+                        <div className="border-2 border-dashed rounded-lg p-6 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-gray-50 transition-colors">
+                          <div className="mb-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                          </div>
+                          <p className="text-sm font-medium">Sélectionnez un fichier</p>
+                          <input
+                            type="file"
+                            id="brand-guidelines-upload"
+                            className="hidden"
+                            accept=".pdf,.doc,.docx"
+                            onChange={(e) => {
+                              if (e.target.files && e.target.files[0]) {
+                                setCampaignData({
+                                  ...campaignData,
+                                  brandGuidelines: e.target.files[0]
+                                });
+                              }
+                            }}
+                          />
                         </div>
                       </div>
                     </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="commission-value">
-                      {formData.commissionModel === "fixed" ? "Fixed Amount ($)" : "Percentage (%)"}
-                    </Label>
-                    <Input
-                      id="commission-value"
-                      type="number"
-                      placeholder={formData.commissionModel === "fixed" ? "e.g., 45" : "e.g., 10"}
-                      value={formData.commissionValue}
-                      onChange={(e) => setFormData({ ...formData, commissionValue: e.target.value })}
-                    />
-                  </div>
-                </div>
-
-                {/* Wallet Integration & Payment Preview */}
-                {formData.budget && (
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-2">
-                      <span className="text-lg font-medium">💳 Wallet Integration & Payment Preview</span>
+                    
+                    {/* OR Divider */}
+                    <div className="flex items-center my-6">
+                      <div className="flex-grow h-px bg-gray-200"></div>
+                      <span className="px-4 text-sm text-gray-500">OU</span>
+                      <div className="flex-grow h-px bg-gray-200"></div>
                     </div>
-
-                    <div className="p-6 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="space-y-3">
-                          <h4 className="font-medium text-blue-900">Payment Summary</h4>
-                          <div className="space-y-2 text-sm">
-                            <div className="flex justify-between">
-                              <span>Total Budget to Prepay:</span>
-                              <span className="font-medium">${Number.parseInt(formData.budget).toLocaleString()}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span>Current Wallet Balance:</span>
-                              <span className="font-medium">${formData.walletBalance.toLocaleString()}</span>
-                            </div>
-                            <div className="border-t pt-2 flex justify-between font-medium">
-                              <span>
-                                {Number.parseInt(formData.budget) <= formData.walletBalance
-                                  ? "Remaining Balance:"
-                                  : "Additional Required:"}
-                              </span>
-                              <span
-                                className={
-                                  Number.parseInt(formData.budget) <= formData.walletBalance
-                                    ? "text-green-600"
-                                    : "text-red-600"
+                    
+                    {/* Website URL */}
+                    <div>
+                      <p className="text-sm font-medium mb-2">URL de votre site internet</p>
+                      <Input
+                        type="url"
+                        placeholder="https://votre-site.com"
+                        value={campaignData.websiteUrl || ''}
+                        onChange={(e) => setCampaignData({ ...campaignData, websiteUrl: e.target.value })}
+                        className="h-12"
+                      />
+                      <p className="text-xs text-muted-foreground mt-2">Auto-extraction possible de vos éléments graphiques</p>
+                    </div>
+                  </div>
+                  
+                  {/* Additional Visuals */}
+                  <div className="bg-white border rounded-lg p-6 shadow-sm">
+                    <h3 className="font-semibold text-lg mb-6">Visuels complémentaires</h3>
+                    
+                    <div className="border-2 border-dashed rounded-lg p-8 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-gray-50 transition-colors">
+                      <div className="mb-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                      </div>
+                      <p className="font-medium mb-1">Glissez vos fichiers ici ou cliquez pour sélectionner</p>
+                      <p className="text-xs text-muted-foreground">PNG, JPG, SVG - max 5 Mo par fichier</p>
+                      <input
+                        type="file"
+                        id="additional-visuals"
+                        className="hidden"
+                        accept=".png,.jpg,.jpeg,.svg"
+                        multiple
+                        onChange={(e) => {
+                          if (e.target.files && e.target.files.length > 0) {
+                            setCampaignData({
+                              ...campaignData,
+                              additionalVisuals: Array.from(e.target.files)
+                            });
+                          }
+                        }}
+                      />
+                    </div>
+                  </div>
+                  
+                  {/* Creative Support Selection */}
+                  <div className="bg-white border rounded-lg p-6 shadow-sm">
+                    <h3 className="font-semibold text-lg mb-6">Sélection des supports créatifs</h3>
+                    
+                    <div className="space-y-4">
+                      {/* Ad Banner */}
+                      <div 
+                        className={`border rounded-lg p-4 transition-all duration-200 cursor-pointer
+                          ${campaignData.creativeSupports?.includes('ad-banner') 
+                            ? 'border-primary bg-primary/5 shadow-sm' 
+                            : 'hover:border-gray-300 hover:bg-gray-50'}`}
+                        onClick={() => {
+                          const isSelected = campaignData.creativeSupports?.includes('ad-banner');
+                          setCampaignData({
+                            ...campaignData,
+                            creativeSupports: isSelected
+                              ? (campaignData.creativeSupports || []).filter(id => id !== 'ad-banner')
+                              : [...(campaignData.creativeSupports || []), 'ad-banner']
+                          });
+                        }}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-3">
+                            <Checkbox 
+                              id="ad-banner" 
+                              checked={campaignData.creativeSupports?.includes('ad-banner')}
+                              onCheckedChange={(checked) => {
+                                if (checked && checked !== "indeterminate") {
+                                  setCampaignData({
+                                    ...campaignData,
+                                    creativeSupports: [...(campaignData.creativeSupports || []), 'ad-banner']
+                                  });
+                                } else {
+                                  setCampaignData({
+                                    ...campaignData,
+                                    creativeSupports: (campaignData.creativeSupports || []).filter(id => id !== 'ad-banner')
+                                  });
                                 }
-                              >
-                                ${Math.abs(formData.walletBalance - Number.parseInt(formData.budget)).toLocaleString()}
-                              </span>
-                            </div>
+                              }}
+                            />
+                            <Label htmlFor="ad-banner" className="font-medium cursor-pointer">Annonce</Label>
+                          </div>
+                          <div className="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded">Offert</div>
+                        </div>
+                      </div>
+                      
+                      {/* Banner */}
+                      <div 
+                        className={`border rounded-lg p-4 transition-all duration-200 cursor-pointer
+                          ${campaignData.creativeSupports?.includes('banner') 
+                            ? 'border-primary bg-primary/5 shadow-sm' 
+                            : 'hover:border-gray-300 hover:bg-gray-50'}`}
+                        onClick={() => {
+                          const isSelected = campaignData.creativeSupports?.includes('banner');
+                          setCampaignData({
+                            ...campaignData,
+                            creativeSupports: isSelected
+                              ? (campaignData.creativeSupports || []).filter(id => id !== 'banner')
+                              : [...(campaignData.creativeSupports || []), 'banner']
+                          });
+                        }}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-3">
+                            <Checkbox 
+                              id="banner" 
+                              checked={campaignData.creativeSupports?.includes('banner')}
+                              onCheckedChange={(checked) => {
+                                if (checked && checked !== "indeterminate") {
+                                  setCampaignData({
+                                    ...campaignData,
+                                    creativeSupports: [...(campaignData.creativeSupports || []), 'banner']
+                                  });
+                                } else {
+                                  setCampaignData({
+                                    ...campaignData,
+                                    creativeSupports: (campaignData.creativeSupports || []).filter(id => id !== 'banner')
+                                  });
+                                }
+                              }}
+                            />
+                            <Label htmlFor="banner" className="font-medium cursor-pointer">Bannière</Label>
+                          </div>
+                          <div className="text-gray-700 text-xs font-medium">150 €</div>
+                        </div>
+                      </div>
+                      
+                      {/* Landing Page */}
+                      <div 
+                        className={`border rounded-lg p-4 transition-all duration-200 cursor-pointer
+                          ${campaignData.creativeSupports?.includes('landing-page') 
+                            ? 'border-primary bg-primary/5 shadow-sm' 
+                            : 'hover:border-gray-300 hover:bg-gray-50'}`}
+                        onClick={() => {
+                          const isSelected = campaignData.creativeSupports?.includes('landing-page');
+                          setCampaignData({
+                            ...campaignData,
+                            creativeSupports: isSelected
+                              ? (campaignData.creativeSupports || []).filter(id => id !== 'landing-page')
+                              : [...(campaignData.creativeSupports || []), 'landing-page']
+                          });
+                        }}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-3">
+                            <Checkbox 
+                              id="landing-page" 
+                              checked={campaignData.creativeSupports?.includes('landing-page')}
+                              onCheckedChange={(checked) => {
+                                if (checked && checked !== "indeterminate") {
+                                  setCampaignData({
+                                    ...campaignData,
+                                    creativeSupports: [...(campaignData.creativeSupports || []), 'landing-page']
+                                  });
+                                } else {
+                                  setCampaignData({
+                                    ...campaignData,
+                                    creativeSupports: (campaignData.creativeSupports || []).filter(id => id !== 'landing-page')
+                                  });
+                                }
+                              }}
+                            />
+                            <Label htmlFor="landing-page" className="font-medium cursor-pointer">Landing Page</Label>
+                          </div>
+                          <div className="text-gray-700 text-xs font-medium">300 €</div>
+                        </div>
+                      </div>
+                      
+                      {/* Email Template */}
+                      <div 
+                        className={`border rounded-lg p-4 transition-all duration-200 cursor-pointer
+                          ${campaignData.creativeSupports?.includes('email-template') 
+                            ? 'border-primary bg-primary/5 shadow-sm' 
+                            : 'hover:border-gray-300 hover:bg-gray-50'}`}
+                        onClick={() => {
+                          const isSelected = campaignData.creativeSupports?.includes('email-template');
+                          setCampaignData({
+                            ...campaignData,
+                            creativeSupports: isSelected
+                              ? (campaignData.creativeSupports || []).filter(id => id !== 'email-template')
+                              : [...(campaignData.creativeSupports || []), 'email-template']
+                          });
+                        }}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-3">
+                            <Checkbox 
+                              id="email-template" 
+                              checked={campaignData.creativeSupports?.includes('email-template')}
+                              onCheckedChange={(checked) => {
+                                if (checked && checked !== "indeterminate") {
+                                  setCampaignData({
+                                    ...campaignData,
+                                    creativeSupports: [...(campaignData.creativeSupports || []), 'email-template']
+                                  });
+                                } else {
+                                  setCampaignData({
+                                    ...campaignData,
+                                    creativeSupports: (campaignData.creativeSupports || []).filter(id => id !== 'email-template')
+                                  });
+                                }
+                              }}
+                            />
+                            <Label htmlFor="email-template" className="font-medium cursor-pointer">Email Template</Label>
+                          </div>
+                          <div className="text-gray-700 text-xs font-medium">100 €</div>
+                        </div>
+                      </div>
+                      
+                      {/* Promotional Video */}
+                      <div 
+                        className={`border rounded-lg p-4 transition-all duration-200 cursor-pointer
+                          ${campaignData.creativeSupports?.includes('promo-video') 
+                            ? 'border-primary bg-primary/5 shadow-sm' 
+                            : 'hover:border-gray-300 hover:bg-gray-50'}`}
+                        onClick={() => {
+                          const isSelected = campaignData.creativeSupports?.includes('promo-video');
+                          setCampaignData({
+                            ...campaignData,
+                            creativeSupports: isSelected
+                              ? (campaignData.creativeSupports || []).filter(id => id !== 'promo-video')
+                              : [...(campaignData.creativeSupports || []), 'promo-video']
+                          });
+                        }}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-3">
+                            <Checkbox 
+                              id="promo-video" 
+                              checked={campaignData.creativeSupports?.includes('promo-video')}
+                              onCheckedChange={(checked) => {
+                                if (checked && checked !== "indeterminate") {
+                                  setCampaignData({
+                                    ...campaignData,
+                                    creativeSupports: [...(campaignData.creativeSupports || []), 'promo-video']
+                                  });
+                                } else {
+                                  setCampaignData({
+                                    ...campaignData,
+                                    creativeSupports: (campaignData.creativeSupports || []).filter(id => id !== 'promo-video')
+                                  });
+                                }
+                              }}
+                            />
+                            <Label htmlFor="promo-video" className="font-medium cursor-pointer">Vidéo promotionnelle</Label>
+                          </div>
+                          <div className="text-gray-700 text-xs font-medium">500 €</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {/* Step 5: Campaign Summary & Wallet */}
+              {currentStep === 5 && (
+                <div className="space-y-8">
+                  <div className="text-center space-y-2">
+                    <h2 className="text-2xl font-semibold">Récapitulatif & Wallet</h2>
+                    <p className="text-muted-foreground">Vérifiez les détails et finalisez votre campagne</p>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Campaign Summary */}
+                    <div className="bg-white border rounded-lg p-6 shadow-sm">
+                      <h3 className="font-semibold text-lg mb-6">Récapitulatif de la campagne</h3>
+                      
+                      <div className="space-y-6">
+                        <div>
+                          <p className="text-sm text-muted-foreground mb-1">NOM</p>
+                          <p className="font-medium">{campaignData.name || "Non défini"}</p>
+                        </div>
+                        
+                        <div>
+                          <p className="text-sm text-muted-foreground mb-1">PÉRIODE</p>
+                          <p className="font-medium">
+                            {campaignData.startDate && campaignData.endDate
+                              ? `${campaignData.startDate} - ${campaignData.endDate}`
+                              : "Non définie"}
+                          </p>
+                        </div>
+                        
+                        <div>
+                          <p className="text-sm text-muted-foreground mb-1">OBJECTIF</p>
+                          <p className="font-medium">
+                            {campaignData.objectiveType === "classic" && campaignData.classicObjective === "conversion"
+                              ? "Conversion commerciale"
+                              : campaignData.objectiveType === "qualification"
+                              ? "Qualification de leads"
+                              : "Non défini"}
+                          </p>
+                        </div>
+                        
+                        <div>
+                          <p className="text-sm text-muted-foreground mb-1">BUDGET</p>
+                          <p className="font-medium">{campaignData.budget ? `${campaignData.budget} €` : "Non défini"}</p>
+                        </div>
+                        
+                        <div className="border-t pt-4 mt-4">
+                          <div className="flex justify-between items-center">
+                            <p className="font-semibold text-lg">Total</p>
+                            <p className="font-semibold text-lg text-primary">{campaignData.budget ? `${campaignData.budget} €` : "0 €"}</p>
                           </div>
                         </div>
-
-                        <div className="space-y-3">
-                          {Number.parseInt(formData.budget) > formData.walletBalance ? (
-                            <div className="space-y-3">
-                              <Alert className="border-amber-200 bg-amber-50">
-                                <AlertTriangle className="h-4 w-4 text-amber-600" />
-                                <AlertDescription className="text-amber-700">
-                                  Insufficient wallet balance. Please top up to continue.
-                                </AlertDescription>
-                              </Alert>
-                              <Button className="w-full bg-green-600 hover:bg-green-700">
-                                Top up your Wallet (+$
-                                {(Number.parseInt(formData.budget) - formData.walletBalance).toLocaleString()})
-                              </Button>
-                            </div>
-                          ) : (
-                            <div className="space-y-3">
-                              <Alert className="border-green-200 bg-green-50">
-                                <CheckCircle className="h-4 w-4 text-green-600" />
-                                <AlertDescription className="text-green-700">
-                                  Sufficient balance available. Ready to launch!
-                                </AlertDescription>
-                              </Alert>
-                            </div>
-                          )}
+                      </div>
+                    </div>
+                    
+                    {/* Wallet */}
+                    <div className="bg-white border rounded-lg p-6 shadow-sm">
+                      <div className="flex items-center gap-3 mb-6">
+                        <div className="bg-blue-100 p-2 rounded-md">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-600"><path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4"/><path d="M4 6v12c0 1.1.9 2 2 2h14v-4"/><path d="M18 12a2 2 0 0 0-2 2c0 1.1.9 2 2 2h4v-4h-4z"/></svg>
+                        </div>
+                        <h3 className="font-semibold text-lg">Wallet</h3>
+                      </div>
+                      
+                      <div className="bg-gray-50 p-4 rounded-md mb-6">
+                        <div className="flex justify-between items-center">
+                          <p className="text-gray-600">Solde actuel</p>
+                          <p className="font-bold text-2xl">{campaignData.walletBalance} €</p>
                         </div>
                       </div>
-                    </div>
-
-                    <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
-                      <div className="flex items-start gap-3">
-                        <Info className="h-5 w-5 text-blue-500 mt-0.5 flex-shrink-0" />
-                        <div className="text-sm text-gray-700">
-                          <p className="font-medium mb-1">💬 How it works:</p>
-                          <p>
-                            You define which actions are meaningful to your business — only those will trigger payouts
-                            to affiliates. This ensures your budget is used on real results, and motivates affiliates to
-                            deliver qualified outcomes that match your expectations.
-                          </p>
+                      
+                      <div className="space-y-3 mb-6">
+                        <div className="flex justify-between">
+                          <p>Budget campagne</p>
+                          <p>{campaignData.budget ? `${campaignData.budget} €` : "0 €"}</p>
+                        </div>
+                        
+                        <div className="flex justify-between">
+                          <p>Éléments créatifs</p>
+                          <p>{campaignData.creativeSupports && campaignData.creativeSupports.length > 0 ? "À calculer" : "0 €"}</p>
+                        </div>
+                        
+                        <div className="flex justify-between font-medium border-t border-gray-200 pt-3 mt-3">
+                          <p>Total à charger</p>
+                          <p>{campaignData.budget ? `${campaignData.budget} €` : "0 €"}</p>
+                        </div>
+                        
+                        <div className="flex justify-between text-orange-500 font-medium">
+                          <p>À débiter maintenant</p>
+                          <p>{campaignData.budget ? `${campaignData.budget} €` : "0 €"}</p>
                         </div>
                       </div>
+                      
+                      <div className="bg-blue-50 border border-blue-100 rounded-md p-4 text-sm text-blue-700 mb-6">
+                        Seuls les éléments créatifs sélectionnés seront immédiatement débités de votre wallet. Le reste du montant sera simplement chargé et activé lors du lancement de la campagne.
+                      </div>
+                      
+                      <Button variant="outline" className="w-full mb-3">Recharger mon wallet</Button>
+                      <Button className="w-full bg-black hover:bg-gray-800">Valider la campagne</Button>
                     </div>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Step 3: Creatives */}
-            {currentStep === 3 && (
-              <div className="space-y-6">
-                <div className="space-y-4">
-                  <Label>Do you have your own creatives?</Label>
-                  <div className="flex gap-4">
-                    <Button
-                      variant={formData.hasCreatives === true ? "default" : "outline"}
-                      onClick={() => setFormData({ ...formData, hasCreatives: true as any })}
-                    >
-                      Yes, I have creatives
-                    </Button>
-                    <Button
-                      variant={formData.hasCreatives === false ? "default" : "outline"}
-                      onClick={() => setFormData({ ...formData, hasCreatives: false as any })}
-                    >
-                      No, create them for me
-                    </Button>
                   </div>
                 </div>
+              )}
+            </CardContent>
+          </Card>
 
-                {formData.hasCreatives === true && (
-                  <div className="space-y-4">
-                    <div className="border-2 border-dashed border-border rounded-lg p-8 text-center">
-                      <Upload className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                      <h3 className="text-lg font-medium mb-2">Upload Your Creatives</h3>
-                      <p className="text-muted-foreground mb-4">Drag and drop files or click to browse</p>
-                      <Button>Choose Files</Button>
-                      <p className="text-xs text-muted-foreground mt-2">Supported: JPEG, PNG, MP4, HTML files, URLs</p>
-                    </div>
-
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                      <div className="flex items-center gap-2 p-3 border rounded-lg">
-                        <ImageIcon className="h-5 w-5 text-blue-500" />
-                        <span className="text-sm">Images</span>
-                      </div>
-                      <div className="flex items-center gap-2 p-3 border rounded-lg">
-                        <Video className="h-5 w-5 text-red-500" />
-                        <span className="text-sm">Videos</span>
-                      </div>
-                      <div className="flex items-center gap-2 p-3 border rounded-lg">
-                        <FileText className="h-5 w-5 text-green-500" />
-                        <span className="text-sm">HTML</span>
-                      </div>
-                      <div className="flex items-center gap-2 p-3 border rounded-lg">
-                        <Globe className="h-5 w-5 text-purple-500" />
-                        <span className="text-sm">URLs</span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {formData.hasCreatives === false && (
-                  <Alert>
-                    <Info className="h-4 w-4" />
-                    <AlertDescription>
-                      <div className="space-y-2">
-                        <p className="font-medium">Creative Services Available</p>
-                        <p>Our design team can create professional creatives for your campaign:</p>
-                        <ul className="list-disc list-inside text-sm space-y-1 ml-4">
-                          <li>Banner ads (static & animated)</li>
-                          <li>Video advertisements</li>
-                          <li>Landing page design</li>
-                          <li>Email templates</li>
-                        </ul>
-                        <p className="text-sm font-medium">Starting at $299 - Add to cart at checkout</p>
-                      </div>
-                    </AlertDescription>
-                  </Alert>
-                )}
-              </div>
-            )}
-
-            {/* Step 4: Review & Launch */}
-            {currentStep === 4 && (
-              <div className="space-y-6">
-                <div className="space-y-4">
-                  <h3 className="text-lg font-medium">Campaign Summary</h3>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-4">
-                      <div>
-                        <Label className="text-sm font-medium text-muted-foreground">Campaign Name</Label>
-                        <p className="font-medium">{formData.name || "Not specified"}</p>
-                      </div>
-                      <div>
-                        <Label className="text-sm font-medium text-muted-foreground">Category</Label>
-                        <p className="font-medium">{formData.category || "Not specified"}</p>
-                      </div>
-                      <div>
-                        <Label className="text-sm font-medium text-muted-foreground">Campaign Period</Label>
-                        <p className="font-medium">
-                          {formData.startDate && formData.endDate
-                            ? `${formData.startDate} to ${formData.endDate}`
-                            : "Not specified"}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="space-y-4">
-                      <div>
-                        <Label className="text-sm font-medium text-muted-foreground">Objective</Label>
-                        <p className="font-medium">{selectedObjective?.title || "Not specified"}</p>
-                      </div>
-                      <div>
-                        <Label className="text-sm font-medium text-muted-foreground">Budget</Label>
-                        <p className="font-medium">
-                          ${formData.budget || "0"} ({formData.budgetType})
-                        </p>
-                      </div>
-                      <div>
-                        <Label className="text-sm font-medium text-muted-foreground">Estimated Leads</Label>
-                        <p className="font-medium">~{estimatedLeads} leads</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <Alert>
-                    <CheckCircle className="h-4 w-4" />
-                    <AlertDescription>
-                      <div className="space-y-2">
-                        <p className="font-medium">Ready to Launch</p>
-                        <p>
-                          Your campaign is configured and ready to go live. You'll be charged when leads start
-                          converting.
-                        </p>
-                        {formData.hasCreatives === false && (
-                          <p className="text-sm">
-                            <strong>Note:</strong> Creative services will be added to your invoice separately.
-                          </p>
-                        )}
-                      </div>
-                    </AlertDescription>
-                  </Alert>
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Navigation */}
-        <div className="flex justify-between">
-          <Button variant="outline" onClick={handlePrevious} disabled={currentStep === 1}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Previous
-          </Button>
-
-          {currentStep < steps.length ? (
-            <Button onClick={handleNext}>
-              Next
-              <ArrowRight className="h-4 w-4 ml-2" />
+          {/* Navigation */}
+          <div className="flex justify-between">
+            <Button variant="outline" onClick={handlePrevious} disabled={currentStep === 1}>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Previous
             </Button>
-          ) : (
-            <Button size="lg" className="bg-green-600 hover:bg-green-700">
-              Launch Campaign & Pay
-              <CheckCircle className="h-4 w-4 ml-2" />
-            </Button>
-          )}
+
+            {currentStep < steps.length ? (
+              <Button onClick={handleNext}>
+                Next
+                <ArrowRight className="h-4 w-4 ml-2" />
+              </Button>
+            ) : (
+              <Button size="lg" className="bg-green-600 hover:bg-green-700">
+                Launch Campaign & Pay
+                <CheckCircle className="h-4 w-4 ml-2" />
+              </Button>
+            )}
+          </div>
         </div>
       </div>
     </div>
