@@ -5,7 +5,7 @@ import { Navigate } from "react-router";
 
 export const SpaceRouteGuard = () => {
   const { isConnected, isLoadingProfile } = useAuthContext();
-  console.log(isConnected, isLoadingProfile);
+
   if (isLoadingProfile) return <SplashScreen />;
 
   return !isConnected ? <Navigate to="/login" replace /> : <SpaceLayout />;

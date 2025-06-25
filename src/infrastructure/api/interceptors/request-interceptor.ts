@@ -1,32 +1,36 @@
-import { httpClient } from "../http-client";
 import { REQUEST_HEADER_AUTH_KEY, TOKEN_TYPE } from "@/domain/constants/api";
 import { tokenManager } from "@/infrastructure/auth/token-manager";
+import { InternalAxiosRequestConfig } from "axios";
 
-export const setupRequestInterceptor = () => {
-  return httpClient.interceptors.request.use(
-    (config) => {
-      const token = tokenManager.getToken();
-      console.log(token);
-      const requestConfig = { ...config };
-      if (token) {
-        requestConfig.headers[REQUEST_HEADER_AUTH_KEY] = `${TOKEN_TYPE} ${token}`;
-      }
+export const withAuthorization = (config: InternalAxiosRequestConfig) => {
+  const token = tokenManager.getToken();
 
-      if (!requestConfig.headers["Content-Type"]) {
-        if (config.data instanceof FormData) {
-          requestConfig.headers["Content-Type"] = "multipart/form-data";
-        } else if (config.data !== undefined) {
-          requestConfig.headers["Content-Type"] = "application/json";
-        }
-      }
+  const requestConfig = { ...config };
+  if (token) {
+    requestConfig.headers[REQUEST_HEADER_AUTH_KEY] = `${TOKEN_TYPE} ${token}`;
+  }
 
-      return requestConfig;
-    },
-    (error) => {
-      return Promise.reject(error);
+  if (!requestConfig.headers["Content-Type"]) {
+    if (config.data instanceof FormData) {
+      requestConfig.headers["Content-Type"] = "multipart/form-data";
+    } else if (config.data !== undefined) {
+      requestConfig.headers["Content-Type"] = "application/json";
     }
-  );
+  }
+
+  return requestConfig;
 };
 
-// Setup the interceptor by default
-export const requestInterceptorId = setupRequestInterceptor();
+export const withMultipartFormData = (config: InternalAxiosRequestConfig) => {
+  const requestConfig = { ...config };
+
+  if (!requestConfig.headers["Content-Type"]) {
+    if (config.data instanceof FormData) {
+      requestConfig.headers["Content-Type"] = "multipart/form-data";
+    } else if (config.data !== undefined) {
+      requestConfig.headers["Content-Type"] = "application/json";
+    }
+  }
+
+  return requestConfig;
+};

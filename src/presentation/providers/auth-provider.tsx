@@ -1,11 +1,8 @@
 import { createContext, FC, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from "react";
-
-import { interceptUnauthorized } from "@/infrastructure/api/interceptors/response-interceptor";
 import { httpClient } from "@/infrastructure/api/http-client";
 import { User } from "@/domain/entities/user";
 import { useGetProfileQuery } from "@/application/use-cases/get-profile-query";
-import { localStorageAdapter } from "@/infrastructure/storage/local-storage-adapter";
-import { TOKEN_KEY } from "@/domain/constants/api";
+import { tokenManager } from "@/infrastructure/auth/token-manager";
 
 interface AuthContextType {
   user: User | null;
@@ -23,12 +20,12 @@ interface AuthProviderProps {
 
 export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const loginBefore = localStorageAdapter.get(TOKEN_KEY);
-  const { data: currentUser, isLoading: isProfileLoading } = useGetProfileQuery(!user && !!loginBefore);
+  const isLoggedIn = !!tokenManager.getToken();
+  const { data: currentUser, isLoading: isProfileLoading } = useGetProfileQuery(!user && isLoggedIn);
 
   const clearUser = useCallback(() => {
     setUser(null);
-    localStorageAdapter.clear();
+    tokenManager.clearToken();
   }, []);
 
   useEffect(() => {
@@ -36,11 +33,11 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
   }, [currentUser]);
 
   useEffect(() => {
-    const interceptorId = interceptUnauthorized(clearUser);
-    
+    const interceptorId = httpClient.catchUnauthorizedResponse(clearUser);
+
     return () => {
       if (interceptorId) {
-        httpClient.interceptors.response.eject(interceptorId);
+        httpClient.rejectResponseInterceptor(interceptorId);
       }
     };
   }, [clearUser]);
@@ -52,12 +49,12 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
   const providerValue = useMemo(
     () => ({
       user,
-      isConnected: !!user,
+      isConnected: isLoggedIn,
       isLoadingProfile: isProfileLoading,
       updateUser,
       clearUser,
     }),
-    [user, isProfileLoading, updateUser, clearUser]
+    [user, isLoggedIn, isProfileLoading, updateUser, clearUser]
   );
 
   return <AuthContext.Provider value={providerValue}>{children}</AuthContext.Provider>;

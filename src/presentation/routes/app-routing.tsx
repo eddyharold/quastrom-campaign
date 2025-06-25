@@ -1,10 +1,9 @@
 import { lazy, Suspense } from "react";
 import { createBrowserRouter } from "react-router";
-// import { RouteGuard } from "./route-guard";
 import { PageSkeleton } from "@/presentation/components/loaders/page-skeleton";
 import { AuthLayout } from "@/presentation/layouts/auth-layout";
 import { NotFound } from "@/presentation/components/not-found";
-import { SpaceRouteGuard } from "./space-route-guard";
+import { SpaceRouteGuard } from "./guards/space-route-guard";
 
 const LoginPage = lazy(() => import("@/features/auth/presentation/pages/login-page"));
 const DashboardPage = lazy(() => import("@/features/dashboard/presentation/pages/dashboard-page"));
@@ -16,7 +15,6 @@ const ProfilePage = lazy(() => import("@/features/profile/presentation/pages/pro
 
 export const router = createBrowserRouter([
   {
-    // element: <RouteGuard />,
     element: <SpaceRouteGuard />,
     children: [
       {

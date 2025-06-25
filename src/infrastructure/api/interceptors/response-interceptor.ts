@@ -1,7 +1,7 @@
 import { UNAUTHORIZED_STATUS_NUMBERS } from "@/domain/constants/api";
 import { httpClient } from "../http-client";
 
-export const interceptUnauthorized = (callback: () => void) => {
+export const catchUnauthorizedResponse = (callback: () => void) => {
   return httpClient.interceptors.response.use(
     (response) => response,
     (error) => {
