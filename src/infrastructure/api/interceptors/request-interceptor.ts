@@ -6,6 +6,7 @@ export const setupRequestInterceptor = () => {
   return httpClient.interceptors.request.use(
     (config) => {
       const token = tokenManager.getToken();
+      console.log(token);
       const requestConfig = { ...config };
       if (token) {
         requestConfig.headers[REQUEST_HEADER_AUTH_KEY] = `${TOKEN_TYPE} ${token}`;
