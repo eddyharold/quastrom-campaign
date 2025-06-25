@@ -5,8 +5,6 @@ export interface BaseApiResponse<T = null> {
   success: boolean;
   message: string;
   data?: T;
-  errorCode?: string;
-  timestamp?: string;
 }
 
 /**
@@ -23,7 +21,6 @@ export type SuccessApiResponse<T> = BaseApiResponse<T> & {
 export type ErrorApiResponse = BaseApiResponse<null> & {
   success: false;
 };
-
 
 /**
  * Type guard to check if an API response is successful

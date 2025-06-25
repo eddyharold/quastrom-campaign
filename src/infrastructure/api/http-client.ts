@@ -1,5 +1,5 @@
 import { API_URL, REQUEST_HEADER_AUTH_KEY, TOKEN_TYPE, UNAUTHORIZED_STATUS_NUMBERS } from "@/domain/constants/api";
-import { RequestBody } from "@/domain/types/api";
+import { BaseApiResponse, RequestBody } from "@/domain/types/api";
 import axios, {
   AxiosInstance,
   AxiosRequestConfig,
@@ -37,23 +37,23 @@ export class HttpClient {
     return HttpClient.instance;
   }
 
-  public async get<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
-    const response = await this.client.get<T>(url, config);
+  public async get<T>(url: string, config?: AxiosRequestConfig): Promise<BaseApiResponse<T>> {
+    const response = await this.client.get<BaseApiResponse<T>>(url, config);
     return response.data;
   }
 
-  public async post<T>(url: string, data?: RequestBody, config?: AxiosRequestConfig): Promise<T> {
-    const response = await this.client.post<T>(url, data, config);
+  public async post<T>(url: string, data?: RequestBody, config?: AxiosRequestConfig): Promise<BaseApiResponse<T>> {
+    const response = await this.client.post<BaseApiResponse<T>>(url, data, config);
     return response.data;
   }
 
-  public async put<T>(url: string, data?: RequestBody, config?: AxiosRequestConfig): Promise<T> {
-    const response = await this.client.put<T>(url, data, config);
+  public async put<T>(url: string, data?: RequestBody, config?: AxiosRequestConfig): Promise<BaseApiResponse<T>> {
+    const response = await this.client.put<BaseApiResponse<T>>(url, data, config);
     return response.data;
   }
 
-  public async delete<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
-    const response = await this.client.delete<T>(url, config);
+  public async delete<T>(url: string, config?: AxiosRequestConfig): Promise<BaseApiResponse<T>> {
+    const response = await this.client.delete<BaseApiResponse<T>>(url, config);
     return response.data;
   }
 
