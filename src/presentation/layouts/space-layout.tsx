@@ -11,6 +11,7 @@ export const SpaceLayout = () => {
   const isDesktop = useMediaQuery("(min-width: 768px)");
 
   return (
+    
     <SidebarProvider
       defaultOpen={isDesktop}
       style={

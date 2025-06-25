@@ -7,7 +7,6 @@ export const setupRequestInterceptor = () => {
     (config) => {
       const token = tokenManager.getToken();
       const requestConfig = { ...config };
-
       if (token) {
         requestConfig.headers[REQUEST_HEADER_AUTH_KEY] = `${TOKEN_TYPE} ${token}`;
       }

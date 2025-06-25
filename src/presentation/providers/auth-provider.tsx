@@ -5,6 +5,7 @@ import { httpClient } from "@/infrastructure/api/http-client";
 import { User } from "@/domain/entities/user";
 import { useGetProfileQuery } from "@/application/use-cases/get-profile-query";
 import { localStorageAdapter } from "@/infrastructure/storage/local-storage-adapter";
+import { TOKEN_KEY } from "@/domain/constants/api";
 
 interface AuthContextType {
   user: User | null;
@@ -22,8 +23,7 @@ interface AuthProviderProps {
 
 export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const loginBefore = localStorageAdapter.get("token");
-
+  const loginBefore = localStorageAdapter.get(TOKEN_KEY);
   const { data: currentUser, isLoading: isProfileLoading } = useGetProfileQuery(!user && !!loginBefore);
 
   const clearUser = useCallback(() => {
@@ -37,6 +37,7 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
 
   useEffect(() => {
     const interceptorId = interceptUnauthorized(clearUser);
+    
     return () => {
       if (interceptorId) {
         httpClient.interceptors.response.eject(interceptorId);

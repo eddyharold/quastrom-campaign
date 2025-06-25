@@ -24,6 +24,7 @@ export type ErrorApiResponse = BaseApiResponse<null> & {
   success: false;
 };
 
+
 /**
  * Type guard to check if an API response is successful
  */

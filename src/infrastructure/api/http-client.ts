@@ -24,7 +24,6 @@ export class HttpClient {
         Accept: "application/json",
       },
     });
-
     this.interceptors = this.client.interceptors;
   }
 
