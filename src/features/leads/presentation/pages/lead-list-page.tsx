@@ -5,10 +5,13 @@ import { useLayoutContext } from "@/presentation/providers/layout-provider";
 import { formatNumber } from "@/domain/utils/currency";
 import { PageHeader } from "@/presentation/components/page-header";
 import { LeadDataTable } from "../components/lead-list-data-table";
-import { ALL_LEADS } from "@/domain/data/lead";
+import { useGetLeadList } from "../../application/use-cases/get-lead-list";
+import { useGetLeadStats } from "../../application/use-cases/get-lead-stats";
 
 export default function LeadListPage() {
   const { updateBreadcrumb } = useLayoutContext();
+  const { data: leads, isLoading } = useGetLeadList();
+  const { data: leadStats } = useGetLeadStats();
 
   useEffect(() => {
     updateBreadcrumb([
@@ -22,10 +25,12 @@ export default function LeadListPage() {
       },
     ]);
   }, [updateBreadcrumb]);
-
-  const pendingLeads = ALL_LEADS.filter((lead) => lead.status === "pending").length;
-  const convertedLeads = ALL_LEADS.filter((lead) => lead.status === "converted").length;
-  const rejectedLeads = ALL_LEADS.filter((lead) => lead.status === "rejected").length;
+  
+  // Extract values from lead stats or calculate from leads if stats not available
+  const totalLeads = leadStats?.total || leads?.length || 0;
+  const pendingLeads = leadStats?.pending || leads?.filter((lead) => lead.status === "pending").length || 0;
+  const convertedLeads = leadStats?.converted || leads?.filter((lead) => lead.status === "converted").length || 0;
+  const rejectedLeads = leadStats?.rejected || leads?.filter((lead) => lead.status === "rejected").length || 0;
 
   return (
     <div className="space-y-6">
@@ -38,7 +43,7 @@ export default function LeadListPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold tracking-tight">{formatNumber(ALL_LEADS.length)}</div>
+            <div className="text-3xl font-bold tracking-tight">{formatNumber(totalLeads)}</div>
           </CardContent>
         </Card>
 
@@ -81,7 +86,7 @@ export default function LeadListPage() {
 
       <PageHeader title="Leads" subtitle="Examiner et valider vos prospects de campagne" hideBackButton />
 
-      <LeadDataTable leads={ALL_LEADS} isLoading={false} />
+      <LeadDataTable leads={leads || []} isLoading={isLoading} />
     </div>
   );
 }

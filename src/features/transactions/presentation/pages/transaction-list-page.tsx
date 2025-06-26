@@ -1,15 +1,24 @@
 import { useEffect } from "react";
-import { ArrowDownRight, ArrowUpRight, Info, Loader, Plus, Wallet } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/presentation/components/ui/card";
 import { useLayoutContext } from "@/presentation/providers/layout-provider";
 import { formatCurrency, formatNumber } from "@/domain/utils/currency";
 import { PageHeader } from "@/presentation/components/page-header";
-import { Button } from "@/presentation/components/ui/button";
-import { ALL_TRANSACTIONS } from "@/domain/data/transaction";
 import { TransactionDataTable } from "../../components/transaction-list-data-table";
+import { useGetTransactionList } from "../../application/use-cases/get-transaction-list";
+import { useGetTransactionStats } from "../../application/use-cases/get-transaction-stats";
+import { WalletBalanceCard } from "../../components/wallet-balance-card";
 
 export default function TransactionListPage() {
   const { updateBreadcrumb } = useLayoutContext();
+  const { data: transactions, isLoading } = useGetTransactionList();
+  const { data: transactionStats } = useGetTransactionStats();
+
+  
+  const recharges = transactionStats?.recharges || 0;
+  const withdraws = transactionStats?.withdraws || 0;
+  const inProgress = transactionStats?.in_progress || 0;
+  
 
   useEffect(() => {
     updateBreadcrumb([
@@ -24,43 +33,9 @@ export default function TransactionListPage() {
     ]);
   }, [updateBreadcrumb]);
 
-  const totalTopUp = ALL_TRANSACTIONS.filter((trx) => trx.status === "success" && trx.type === "top-up").reduce(
-    (total, trx) => total + trx.amount,
-    0
-  );
-  const totalPayment = ALL_TRANSACTIONS.filter((trx) => trx.status === "success" && trx.type === "payment").reduce(
-    (total, trx) => total + trx.amount,
-    0
-  );
-  const pendingTransactions = ALL_TRANSACTIONS.filter((trx) => trx.status === "pending").length;
-
-  const walletBalance = totalPayment > totalTopUp ? 0 : totalTopUp - totalPayment;
-
   return (
     <div className="space-y-6">
-      <Card className="border-none bg-gradient-to-r from-primary dark:from-card to-primary/80 dark:to-primary/5 text-white">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Wallet className="h-6 w-6" />
-              <CardTitle>Solde du portefeuille</CardTitle>
-            </div>
-            <Button className="bg-white/80 hover:bg-white/90 text-primary dark:bg-primary/80 dark:hover:bg-primary/90 dark:text-primary-foreground">
-              <Plus />
-              Recharger
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            <div className="text-3xl font-bold">{formatCurrency(walletBalance)}</div>
-            <p className="text-sm text-white/80 dark:text-muted-foreground flex items-center gap-1">
-              <Info className="text-warning size-3" /> Vous etes a 20% d'atteindre le seuil minimum de votre
-              portefeuille
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+      <WalletBalanceCard />
 
       <div className="grid w-full gap-4 md:grid-cols-3">
         <Card>
@@ -71,7 +46,7 @@ export default function TransactionListPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold tracking-tight">{formatCurrency(totalTopUp)}</div>
+            <div className="text-3xl font-bold tracking-tight">{formatCurrency(recharges)}</div>
           </CardContent>
         </Card>
 
@@ -83,7 +58,7 @@ export default function TransactionListPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold tracking-tight">{formatCurrency(totalPayment)}</div>
+            <div className="text-3xl font-bold tracking-tight">{formatCurrency(withdraws)}</div>
           </CardContent>
         </Card>
 
@@ -91,11 +66,11 @@ export default function TransactionListPage() {
           <CardHeader className="flex items-center justify-between space-y-0 pb-1">
             <CardTitle className="text-sm font-medium text-muted-foreground">Transactions en cours</CardTitle>
             <div className="rounded-md bg-warning/20 size-8 flex items-center justify-center">
-              <Loader className="size-4 text-warning" />
+              <Loader2 className="size-4 text-warning" />
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold tracking-tight">{formatNumber(pendingTransactions)}</div>
+            <div className="text-3xl font-bold tracking-tight">{formatNumber(inProgress)}</div>
           </CardContent>
         </Card>
       </div>
@@ -106,7 +81,8 @@ export default function TransactionListPage() {
         hideBackButton
       />
 
-      <TransactionDataTable transactions={ALL_TRANSACTIONS} isLoading={false} />
+      <TransactionDataTable transactions={transactions || []} isLoading={isLoading} />
+
     </div>
   );
 }

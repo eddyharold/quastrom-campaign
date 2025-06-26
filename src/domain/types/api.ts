@@ -5,8 +5,15 @@ export interface BaseApiResponse<T = null> {
   success: boolean;
   message: string;
   data?: T;
-  errorCode?: string;
-  timestamp?: string;
+  pagination?: {
+    total: number;
+    per_page: number;
+    current_page: number;
+    last_page: number;
+    from: number;
+    to: number;
+    has_more_pages: boolean;
+  }
 }
 
 /**
@@ -42,6 +49,12 @@ export interface PaginatedResponse<T> {
   hasPreviousPage: boolean;
 }
 
+export interface NewPaginatedResponse<T> {
+  success: boolean;
+  message: string;
+  data: T[];
+  
+}
 /**
  * API error response with additional error details
  */

@@ -24,8 +24,8 @@ export default function LoginPage() {
 
   const handleLogin = (data: LoginDto) => {
     login(data).then((rs) => {
-      if (rs?.user) {
-        updateUser(rs.user);
+      if (rs?.data?.user) {
+        updateUser(rs.data.user);
         navigate("/", {
           replace: true,
         });

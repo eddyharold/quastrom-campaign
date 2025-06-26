@@ -10,7 +10,7 @@ type CampaignDetailsPanelProps = {
   onDismiss?: () => void;
 };
 
-const conversionTriggerLabels = {
+const conversionTriggerLabels: Record<string, string> = {
   "signed-quote": "Devis Signé",
   "confirmed-sale": "Vente Confirmée",
   "appointment-booked": "Rendez-vous Confirmé",
@@ -25,7 +25,7 @@ export const CampaignDetailsPanel = ({ campaign, isOpen, onDismiss }: CampaignDe
           <SheetTitle className="text-xl font-semibold">{campaign?.name || "Selectionner une campagne"}</SheetTitle>
           <SheetDescription className="flex items-center gap-4">
             {campaign && <CampaignStatusBadge campaign={campaign} />}
-            <span>Crée le {formatDateFromPattern(campaign?.createdDate, "dd/MM/yyyy")}</span>
+            <span>Crée le {formatDateFromPattern(campaign?.created_at, "dd/MM/yyyy")}</span>
           </SheetDescription>
         </SheetHeader>
 
@@ -36,29 +36,29 @@ export const CampaignDetailsPanel = ({ campaign, isOpen, onDismiss }: CampaignDe
             <div className="grid grid-cols-2 gap-4 border rounded-lg p-4">
               <div className="space-y-1">
                 <p className="text-xs text-muted-foreground">Budget Allocated</p>
-                <p className="text-base font-semibold">{formatCurrency(campaign?.budget)}</p>
+                <p className="text-base font-semibold">{formatCurrency(Number(campaign?.budget || 0))}</p>
               </div>
               <div className="space-y-1">
                 <p className="text-xs text-muted-foreground">Amount Spent</p>
-                <p className="text-base font-semibold text-destructive">{formatCurrency(campaign?.spent)}</p>
+                <p className="text-base font-semibold text-destructive">{formatCurrency(Number(campaign?.spent || 0))}</p>
               </div>
               <div className="space-y-1">
                 <p className="text-xs text-muted-foreground">Remaining Balance</p>
                 <p className="text-base font-semibold text-success">
-                  {formatCurrency((campaign?.budget || 0) - (campaign?.spent || 0))}
+                  {formatCurrency(Number(campaign?.budget || 0) - Number(campaign?.spent || 0))}
                 </p>
               </div>
               <div className="space-y-1">
                 <p className="text-xs text-muted-foreground">Est. Cost per Lead</p>
-                <p className="text-base font-semibold">{formatCurrency(campaign?.estimatedCostPerLead)}</p>
+                <p className="text-base font-semibold">{formatCurrency(Number(campaign?.price_lead || 0))}</p>
               </div>
               <div className="space-y-1">
                 <p className="text-xs text-muted-foreground">Leads Generated</p>
-                <p className="text-base font-semibold">{formatNumber(campaign?.conversions)}</p>
+                <p className="text-base font-semibold">{formatNumber(campaign?.estimated_leads || 0)}</p>
               </div>
               <div className="space-y-1">
                 <p className="text-xs text-muted-foreground">Conversion Rate</p>
-                <p className="text-base font-semibold">{formatNumber(campaign?.conversionRate)}%</p>
+                <p className="text-base font-semibold">{formatNumber(Number(campaign?.conversion_rate || 0))}%</p>
               </div>
             </div>
           </div>
@@ -66,12 +66,12 @@ export const CampaignDetailsPanel = ({ campaign, isOpen, onDismiss }: CampaignDe
           <div className="flex flex-col gap-2">
             <h5 className="text-base font-semibold flex justify-between">
               <span>Depenses effectuees</span>
-              <span>{Math.round(((campaign?.spent || 0) / (campaign?.budget || 0)) * 100)}%</span>
+              <span>{Math.round((Number(campaign?.spent || 0) / Number(campaign?.budget || 1)) * 100)}%</span>
             </h5>
             <div className="w-full h-2 bg-gray-200 rounded-full">
               <div
                 className="h-2 bg-blue-500 rounded-full transition-all"
-                style={{ width: `${((campaign?.spent || 0) / (campaign?.budget || 0)) * 100}%` }}
+                style={{ width: `${Math.min(100, (Number(campaign?.spent || 0) / Number(campaign?.budget || 1)) * 100)}%` }}
               />
             </div>
           </div>
@@ -82,7 +82,7 @@ export const CampaignDetailsPanel = ({ campaign, isOpen, onDismiss }: CampaignDe
             <div className="space-y-4 border rounded-lg p-4">
               <div className="space-y-2">
                 <div className="text-xs text-muted-foreground">But de la campagne</div>
-                <div className="font-semibold">{campaign?.objective}</div>
+                <div className="font-semibold">{campaign?.campaign_objective_id === 1 ? 'Leads Qualifiés' : campaign?.campaign_objective_id === 2 ? 'Rendez-vous' : 'Prospects'}</div>
               </div>
 
               <div className="h-px border-t border-dashed w-full" />
@@ -90,8 +90,8 @@ export const CampaignDetailsPanel = ({ campaign, isOpen, onDismiss }: CampaignDe
               <div className="space-y-2">
                 <div className="text-xs text-muted-foreground">Declencheur de conversion</div>
                 <ul className="list-disc list-inside space-y-1.5">
-                  {campaign?.conversionTriggers.map((trigger) => (
-                    <li key={trigger}>{conversionTriggerLabels[trigger as keyof typeof conversionTriggerLabels]}</li>
+                  {campaign?.validation_condition_selected.split(',').map((trigger) => (
+                    <li key={trigger}>{conversionTriggerLabels[trigger] || trigger}</li>
                   ))}
                 </ul>
               </div>
@@ -101,13 +101,13 @@ export const CampaignDetailsPanel = ({ campaign, isOpen, onDismiss }: CampaignDe
               <div className="space-y-2">
                 <div className="text-xs text-muted-foreground">Modele de commission</div>
                 <div className="font-semibold">
-                  {campaign?.commissionModel === "fixed" ? "Montant fixe:" : "Pourcentage:"}{" "}
+                  {campaign?.commission_model === "fixed" ? "Montant fixe:" : "Pourcentage:"}{" "}
                   <span className="text-primary">
-                    {campaign?.commissionModel === "fixed"
-                      ? formatCurrency(campaign?.commissionValue)
-                      : `${campaign?.commissionValue}%`}
+                    {campaign?.commission_model === "fixed"
+                      ? formatCurrency(Number(campaign?.commission_value || 0))
+                      : `${campaign?.commission_value}%`}
                   </span>{" "}
-                  {campaign?.commissionModel === "fixed" ? "par lead" : "de la conversion"}
+                  {campaign?.commission_model === "fixed" ? "par lead" : "de la conversion"}
                 </div>
               </div>
             </div>
@@ -134,11 +134,11 @@ export const CampaignDetailsPanel = ({ campaign, isOpen, onDismiss }: CampaignDe
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1 border border-dashed rounded-lg p-4">
                 <p className="text-xs text-muted-foreground">Date de debut</p>
-                <p className="font-medium">{formatDateFromPattern(campaign?.startDate, "dd/MM/yyyy")}</p>
+                <p className="font-medium">{formatDateFromPattern(campaign?.start_date, "dd/MM/yyyy")}</p>
               </div>
               <div className="space-y-1 border border-dashed rounded-lg p-4">
                 <p className="text-xs text-muted-foreground">Date de fin</p>
-                <p className="font-medium">{formatDateFromPattern(campaign?.endDate, "dd/MM/yyyy")}</p>
+                <p className="font-medium">{formatDateFromPattern(campaign?.end_date, "dd/MM/yyyy")}</p>
               </div>
             </div>
           </div>

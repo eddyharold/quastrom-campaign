@@ -11,22 +11,24 @@ export type Creative = {
 
 export type Campaign = {
   id: number;
+  user_id: number;
   name: string;
   description: string;
-  objective: string;
+  price_lead: number | null;
   status: CampaignStatus;
-  startDate: string;
-  endDate: string;
-  createdDate: string;
   category: string;
-  budget: number;
-  spent: number;
-  conversions: number;
-  conversionRate: number;
-  estimatedCostPerLead: number;
-  commissionModel: CommissionModel;
-  commissionValue: number;
-  conversionTriggers: string[];
-  creatives: Creative[];
-  lastLeadGenerated: string;
+  budget: string;
+  spent: string;
+  commission_model: CommissionModel;
+  commission_value: string;
+  start_date: string;
+  end_date: string;
+  estimated_leads: number;
+  conversion_rate: string;
+  campaign_selected_creatives: string;
+  validation_condition_selected: string;
+  campaign_objective_id: number;
+  created_at: string;
+  updated_at: string;
+  creatives?: Creative[];
 };
