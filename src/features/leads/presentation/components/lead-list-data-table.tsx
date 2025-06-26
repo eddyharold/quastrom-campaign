@@ -11,6 +11,8 @@ import { ConfirmDialog } from "@/presentation/components/confirm-dialog";
 import { CampaignDetailsPanel } from "@/presentation/components/lead-details-panel";
 import { Campaign } from "@/domain/entities/campaign";
 import { LeadStatusBadge } from "@/presentation/components/lead-status-badge";
+import { useDeleteLeadMutation } from "../../application/use-cases/delete-lead";
+import { toast } from "sonner";
 
 type LeadDataTableProps = {
   leads?: Lead[];
@@ -21,13 +23,20 @@ export const LeadDataTable = ({ leads, isLoading }: LeadDataTableProps) => {
   const viewDetails = useModal<Lead>();
   const viewCampaignDetails = useModal<Campaign>();
   const confirmDelete = useModal<Lead>();
+  const { mutate: deleteLead, isPending: isLoadingDeleteLead } = useDeleteLeadMutation();
 
-  const handleDeleteCampaign = () => {
+  const handleDeleteLead = () => {
     if (!confirmDelete.data) return;
-
-    // deleteCampaign(confirmDelete.data.id.toString()).then(() => {
-    //   confirmDelete.close();
-    // });
+    
+    deleteLead(confirmDelete.data.id.toString(), {
+      onSuccess: () => {
+        toast.success(`Le lead ${confirmDelete.data!.name} a été supprimé avec succès`);
+        confirmDelete.close();
+      },
+      onError: (error) => {
+        toast.error(`Erreur lors de la suppréssion: ${error.message || 'Une erreur est survenue'}`);
+      },
+    });
   };
 
   const columns: ColumnDef<Lead>[] = useMemo(
@@ -121,7 +130,7 @@ export const LeadDataTable = ({ leads, isLoading }: LeadDataTableProps) => {
         },
       },
     ],
-    [confirmDelete, viewDetails, viewCampaignDetails]
+    [confirmDelete, viewDetails, viewCampaignDetails, deleteLead]
   );
 
   return (
@@ -134,13 +143,15 @@ export const LeadDataTable = ({ leads, isLoading }: LeadDataTableProps) => {
       />
 
       <ConfirmDialog
-        // isLoading={isLoadingDeleteCampaign}
+        isLoading={isLoadingDeleteLead}
         isOpen={confirmDelete.isOpen}
         onDismiss={confirmDelete.close}
-        onAction={handleDeleteCampaign}
+        onAction={handleDeleteLead}
         messages={{
-          title: "Supprimer la campagne ?",
-          description: "Voulez-vous vraiment supprimer cette campagne ?",
+          title: "Supprimer le lead ?",
+          description: confirmDelete.data ? 
+            `Voulez-vous vraiment supprimer le lead "${confirmDelete.data.name}" ? Cette action est irréversible.` : 
+            "Voulez-vous vraiment supprimer ce lead ?",
           buttons: {
             cancel: "Annuler",
             action: "Supprimer",

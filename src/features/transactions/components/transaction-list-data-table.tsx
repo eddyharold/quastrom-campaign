@@ -1,5 +1,5 @@
 import { ColumnDef } from "@tanstack/react-table";
-import { ArrowDownRight, ArrowUpRight } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, MoreHorizontal, Trash } from "lucide-react";
 import { useMemo } from "react";
 import { useModal } from "@/presentation/hooks/use-modal";
 import { formatCurrency } from "@/domain/utils/currency";
@@ -9,6 +9,11 @@ import { CampaignDetailsPanel } from "@/presentation/components/lead-details-pan
 import { Campaign } from "@/domain/entities/campaign";
 import { Transaction } from "@/domain/entities/transaction";
 import { TransactionStatusBadge } from "@/presentation/components/transaction-status-badge";
+import { Button } from "@/presentation/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/presentation/components/ui/dropdown-menu";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/presentation/components/ui/dialog";
+import { useDeleteTransactionMutation } from "../application/use-cases/delete-transaction";
+import { toast } from "sonner";
 
 type TransactionDataTableProps = {
   transactions?: Transaction[];
@@ -17,6 +22,23 @@ type TransactionDataTableProps = {
 
 export const TransactionDataTable = ({ transactions, isLoading }: TransactionDataTableProps) => {
   const viewCampaignDetails = useModal<Campaign>();
+  const confirmDelete = useModal<Transaction>();
+  const { mutate: deleteTransaction, isPending: isLoadingDeleteTransaction } = useDeleteTransactionMutation();
+  
+  const handleDeleteTransaction = () => {
+    if (!confirmDelete.data) return;
+    
+    deleteTransaction(confirmDelete.data.id.toString(), {
+      onSuccess: () => {
+        // Using non-null assertion since we've already checked confirmDelete.data exists
+        toast.success(`La transaction ${confirmDelete.data!.id} a été supprimée avec succès`);
+        confirmDelete.close();
+      },
+      onError: (error) => {
+        toast.error(`Erreur lors de la suppression: ${error.message || 'Une erreur est survenue'}`);
+      },
+    });
+  };
 
   const columns: ColumnDef<Transaction>[] = useMemo(
     () => [
@@ -25,12 +47,12 @@ export const TransactionDataTable = ({ transactions, isLoading }: TransactionDat
         header: "Type",
         cell: ({ row }) => (
           <div className="flex items-center gap-2">
-            {row.original.type === "top-up" ? (
+            {row.original.type === "top_up" ? (
               <ArrowUpRight className="h-4 w-4 text-success" />
             ) : (
               <ArrowDownRight className="h-4 w-4 text-destructive" />
             )}
-            <span className="text-sm capitalize">{row.original.type === "top-up" ? "Recharge" : "Paiement"}</span>
+            <span className="text-sm capitalize">{row.original.type === "top_up" ? "Recharge" : "Paiement"}</span>
           </div>
         ),
       },
@@ -38,7 +60,7 @@ export const TransactionDataTable = ({ transactions, isLoading }: TransactionDat
         id: "amount",
         header: "Montant",
         cell: ({ row }) => (
-          <span className={`font-medium ${row.original.type === "top-up" ? "text-success" : "text-destructive"}`}>
+          <span className={`font-medium ${row.original.type === "top_up" ? "text-success" : "text-destructive"}`}>
             {formatCurrency(row.original.amount)}
           </span>
         ),
@@ -76,9 +98,36 @@ export const TransactionDataTable = ({ transactions, isLoading }: TransactionDat
       {
         id: "date",
         header: "Date de création",
-        cell: ({ row: { original: data } }) => formatDateFromPattern(data.date, "dd/MM/yyyy - HH:mm:ss"),
+        cell: ({ row: { original: data } }) => formatDateFromPattern(data.created_at || data.date, "dd/MM/yyyy - HH:mm:ss"),
         meta: {
           className: "w-[12%]",
+        },
+      },
+      {
+        id: "actions",
+        header: "Actions",
+        cell: ({ row }) => {
+          const transaction = row.original;
+          
+          return (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="h-8 w-8 p-0">
+                  <span className="sr-only">Ouvrir le menu</span>
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  className="text-destructive focus:text-destructive"
+                  onClick={() => confirmDelete.open(transaction)}
+                >
+                  <Trash className="mr-2 h-4 w-4" />
+                  Supprimer
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          );
         },
       },
     ],
@@ -99,6 +148,29 @@ export const TransactionDataTable = ({ transactions, isLoading }: TransactionDat
         isOpen={viewCampaignDetails.isOpen}
         onDismiss={viewCampaignDetails.close}
       />
+      
+      <Dialog open={confirmDelete.isOpen} onOpenChange={confirmDelete.close}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirmer la suppression</DialogTitle>
+            <DialogDescription>
+              Êtes-vous sûr de vouloir supprimer cette transaction ? Cette action est irréversible.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={confirmDelete.close}>
+              Annuler
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={handleDeleteTransaction}
+              disabled={isLoadingDeleteTransaction}
+            >
+              {isLoadingDeleteTransaction ? "Suppression..." : "Supprimer"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };

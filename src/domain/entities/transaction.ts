@@ -1,16 +1,41 @@
 import { Campaign } from "./campaign";
 import { User } from "./user";
 
-export type TransactionType = "top-up" | "payment";
+export type TransactionType = "top_up" | "payment";
 export type TransactionStatus = "success" | "pending" | "failed";
+
+export interface TransactionStats {
+  recharges: number;
+  withdraws: number;
+  in_progress: number;
+}
 
 export interface Transaction {
   id: number;
-  date: string;
   type: TransactionType;
-  amount: number;
+  amount: string;
+  balance_before: string;
+  balance_after: string;
+  status: TransactionStatus;
+  reference: string | null;
+  payment_method: string | null;
+  external_transaction_id: string | null;
+  description: string;
+  metadata: any | null;
+  processed_at: string | null;
+  wallet_id: number;
+  campaign_id: number | null;
+  lead_id: number | null;
+  created_at: string;
+  updated_at: string;
+  date?: string;
   campaign?: Campaign | null;
   user?: User | null;
-  status: TransactionStatus;
-  description: string;
 }
+
+export interface TransactionStats {
+  recharges: number;
+  withdraws: number;
+  in_progress: number;
+}
+

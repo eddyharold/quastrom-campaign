@@ -3,27 +3,25 @@ import {
   ArrowUpRight,
   ChevronRight,
   Eye,
-  Info,
   MousePointerClick,
   Pause,
   Percent,
   Play,
-  Plus,
   Settings,
   TrendingUp,
   Users,
-  Wallet,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/presentation/components/ui/card";
 import { useLayoutContext } from "@/presentation/providers/layout-provider";
 import { Tabs, TabsList, TabsTrigger } from "@/presentation/components/ui/tabs";
-import { formatCurrency, formatNumber } from "@/domain/utils/currency";
+import { formatNumber } from "@/domain/utils/currency";
 import { PerformanceLineChart } from "../components/perfomance-line-chart";
 import { Button } from "@/presentation/components/ui/button";
 import { Badge } from "@/presentation/components/ui/badge";
 import { Link } from "react-router";
 import { RECENT_CAMPAIGNS } from "@/domain/data/campaign";
 import { SystemAlert } from "../components/notification-pannel";
+import { WalletBalanceCard } from "@/features/transactions/components/wallet-balance-card";
 
 // import { DashboardSkeleton } from "../components/dashboard-skeleton";
 
@@ -150,29 +148,8 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      <Card className="border-none bg-gradient-to-r from-primary dark:from-card to-primary/80 dark:to-primary/5 text-white">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Wallet className="h-6 w-6" />
-              <CardTitle>Solde du portefeuille</CardTitle>
-            </div>
-            <Button className="bg-white/80 hover:bg-white/90 text-primary dark:bg-primary/80 dark:hover:bg-primary/90 dark:text-primary-foreground">
-              <Plus />
-              Recharger
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            <div className="text-3xl font-bold">{formatCurrency(5000)}</div>
-            <p className="text-sm text-white/80 dark:text-muted-foreground flex items-center gap-1">
-              <Info className="text-warning size-3" /> Vous etes a 20% d'atteindre le seuil minimum de votre
-              portefeuille
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+      <WalletBalanceCard />
+     
 
       <div className="space-y-3">
         <div className="flex items-center justify-between">

@@ -6,11 +6,20 @@ import { formatCurrency, formatNumber } from "@/domain/utils/currency";
 import { Button } from "@/presentation/components/ui/button";
 import { Link } from "react-router";
 import { PageHeader } from "@/presentation/components/page-header";
-import { ALL_CAMPAIGNS } from "@/domain/data/campaign";
 import { CampaignDataTable } from "../components/campaign-list-data-table";
+import { useGetCampaignList, useCampaignStatistics } from "../../application/use-cases/get-campagn-list";
 
-export default function DashboardPage() {
+export default function CampagnList() {
   const { updateBreadcrumb } = useLayoutContext();
+  const { data: campaigns, isLoading } = useGetCampaignList();
+  const { 
+    totalActiveCampaigns, 
+    investments, 
+    alreadySpend, 
+    totalConverted, 
+    avgConversionRate,
+    totalCampaigns
+  } = useCampaignStatistics(campaigns);
 
   useEffect(() => {
     updateBreadcrumb([
@@ -25,12 +34,6 @@ export default function DashboardPage() {
     ]);
   }, [updateBreadcrumb]);
 
-  const totalActiveCampaigns = ALL_CAMPAIGNS.filter((campaign) => campaign.status === "active").length;
-  const investments = ALL_CAMPAIGNS.reduce((total, campaign) => total + campaign.budget, 0);
-  const alreadySpend = ALL_CAMPAIGNS.reduce((total, campaign) => total + campaign.spent, 0);
-  const totalConverted = ALL_CAMPAIGNS.reduce((total, campaign) => total + campaign.conversions, 0);
-  const avgConversionRate = Math.round((totalConverted / ALL_CAMPAIGNS.length) * 100);
-
   return (
     <div className="space-y-6">
       <div className="grid w-full gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -42,7 +45,7 @@ export default function DashboardPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold tracking-tight">{formatNumber(ALL_CAMPAIGNS.length)}</div>
+            <div className="text-3xl font-bold tracking-tight">{formatNumber(totalCampaigns)}</div>
             <p className="text-sm text-muted-foreground">{totalActiveCampaigns} active</p>
           </CardContent>
         </Card>
@@ -93,7 +96,7 @@ export default function DashboardPage() {
         </Button>
       </PageHeader>
 
-      <CampaignDataTable campaigns={ALL_CAMPAIGNS} isLoading={false} />
+      <CampaignDataTable campaigns={campaigns} isLoading={isLoading} />
     </div>
   );
 }

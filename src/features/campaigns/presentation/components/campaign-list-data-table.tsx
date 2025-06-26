@@ -10,6 +10,8 @@ import { ActionsDropdown } from "@/presentation/components/data-table/actions-dr
 import { DataTable } from "@/presentation/components/data-table/table";
 import { ConfirmDialog } from "@/presentation/components/confirm-dialog";
 import { CampaignDetailsPanel } from "../../../../presentation/components/campaign-details-panel";
+import { useDeleteCampaignMutation } from "../../application/use-cases/delete-campaign";
+import { toast } from "sonner";
 
 type CampaignDataTableProps = {
   campaigns?: Campaign[];
@@ -19,13 +21,24 @@ type CampaignDataTableProps = {
 export const CampaignDataTable = ({ campaigns, isLoading }: CampaignDataTableProps) => {
   const viewDetails = useModal<Campaign>();
   const confirmDelete = useModal<Campaign>();
+  const { mutate: deleteCampaign, isPending: isLoadingDeleteCampaign } = useDeleteCampaignMutation();
 
   const handleDeleteCampaign = () => {
     if (!confirmDelete.data) return;
 
-    // deleteCampaign(confirmDelete.data.id.toString()).then(() => {
-    //   confirmDelete.close();
-    // });
+    deleteCampaign(confirmDelete.data.id.toString(), {
+      onSuccess: () => {
+        toast.success(`La campagne ${confirmDelete.data?.name} a été supprimée avec succès.`, {
+          description: "L'opération a été effectuée avec succès.",
+        });
+        confirmDelete.close();
+      },
+      onError: (error) => {
+        toast.error("Erreur de suppression", {
+          description: `Une erreur est survenue lors de la suppression de la campagne: ${error.message}`,
+        });
+      },
+    });
   };
 
   const columns: ColumnDef<Campaign>[] = useMemo(
@@ -38,14 +51,14 @@ export const CampaignDataTable = ({ campaigns, isLoading }: CampaignDataTablePro
             <p className="font-medium truncate group-hover:underline group-hover:underline-offset-2 group-hover:text-primary group-hover:decoration-dashed">
               {row.original.name}
             </p>
-            <p className="text-sm text-muted-foreground">{row.original.conversionRate}% taux de conversion</p>
+            <p className="text-sm text-muted-foreground">{row.original.conversion_rate}% taux de conversion</p>
           </div>
         ),
       },
       {
         id: "objective",
         header: "Objective",
-        cell: ({ row: { original: data } }) => data.objective,
+        cell: ({ row: { original: data } }) => data.category,
       },
       {
         id: "budget",
@@ -58,7 +71,7 @@ export const CampaignDataTable = ({ campaigns, isLoading }: CampaignDataTablePro
             <div className="w-20 h-1.5 bg-gray-200 rounded-full">
               <div
                 className="h-1.5 bg-blue-500 rounded-full"
-                style={{ width: `${(row.original.spent / row.original.budget) * 100}%` }}
+                style={{ width: `${(Number(row.original.spent) / Number(row.original.budget)) * 100}%` }}
               />
             </div>
           </div>
@@ -69,7 +82,7 @@ export const CampaignDataTable = ({ campaigns, isLoading }: CampaignDataTablePro
         header: "Leads",
         cell: ({ row }) => (
           <div className="border border-dashed p-1.5 text-sm rounded w-fit">
-            {formatNumber(row.original.conversions)}
+            {formatNumber(row.original.estimated_leads)}
           </div>
         ),
       },
@@ -84,7 +97,7 @@ export const CampaignDataTable = ({ campaigns, isLoading }: CampaignDataTablePro
       {
         id: "date",
         header: "Date de création",
-        cell: ({ row: { original: data } }) => formatDateFromPattern(data.createdDate, "dd/MM/yyyy - HH:mm:ss"),
+        cell: ({ row: { original: data } }) => formatDateFromPattern(data.created_at, "dd/MM/yyyy - HH:mm:ss"),
         meta: {
           className: "w-[12%]",
         },
@@ -136,13 +149,15 @@ export const CampaignDataTable = ({ campaigns, isLoading }: CampaignDataTablePro
       />
 
       <ConfirmDialog
-        // isLoading={isLoadingDeleteCampaign}
+        isLoading={isLoadingDeleteCampaign}
         isOpen={confirmDelete.isOpen}
         onDismiss={confirmDelete.close}
         onAction={handleDeleteCampaign}
         messages={{
           title: "Supprimer la campagne ?",
-          description: "Voulez-vous vraiment supprimer cette campagne ?",
+          description: confirmDelete.data ? 
+            `Voulez-vous vraiment supprimer la campagne "${confirmDelete.data.name}" ? Cette action est irréversible.` : 
+            "Voulez-vous vraiment supprimer cette campagne ?",
           buttons: {
             cancel: "Annuler",
             action: "Supprimer",
