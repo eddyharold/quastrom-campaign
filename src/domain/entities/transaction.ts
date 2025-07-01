@@ -1,7 +1,8 @@
+import { GenericType } from "../types/common";
 import { Campaign } from "./campaign";
 import { User } from "./user";
 
-export type TransactionType = "top_up" | "payment";
+export type TransactionType = "top_up" | "withdraw";
 export type TransactionStatus = "success" | "pending" | "failed";
 
 export interface TransactionStats {
@@ -21,7 +22,7 @@ export interface Transaction {
   payment_method: string | null;
   external_transaction_id: string | null;
   description: string;
-  metadata: any | null;
+  metadata: GenericType | null;
   processed_at: string | null;
   wallet_id: number;
   campaign_id: number | null;
@@ -38,4 +39,3 @@ export interface TransactionStats {
   withdraws: number;
   in_progress: number;
 }
-

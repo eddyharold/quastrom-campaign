@@ -1,6 +1,4 @@
-"use client";
-
-import { Fragment, useEffect, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import {
   Card,
   CardHeader,
@@ -22,25 +20,20 @@ import {
   FileText,
   Target,
   CheckCircle,
-  Phone,
-  CalendarDays,
-  Calculator,
-  ShoppingCart,
   Package,
   Palette,
   Check,
   Euro,
   Trash,
   Info,
-  CreditCard,
   Eye,
+  Sparkles,
+  Link2,
+  Plus,
 } from "lucide-react";
 import { cn } from "@/domain/utils/common";
 import { useLayoutContext } from "@/presentation/providers/layout-provider";
 import { DatePicker } from "@/presentation/components/ui/date-picker";
-import { CreateCampaignDto, createCampaignSchema } from "../../domain/dto/create-campaign-dto";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Form,
   FormControl,
@@ -59,7 +52,17 @@ import { PageHeader } from "@/presentation/components/page-header";
 import { RadioGroup, RadioGroupItem } from "@/presentation/components/ui/radio-group";
 import { Badge } from "@/presentation/components/ui/badge";
 import { formatCurrency } from "@/domain/utils/currency";
-import { formatDateFromPattern } from "@/domain/utils/date";
+import { formatDateFromPattern, formatIntervalDateToHuman } from "@/domain/utils/date";
+import { useGetAllCampaignObjective } from "../../application/use-cases/get-all-campaign-objective-query";
+import { useGetAllCreative } from "../../application/use-cases/get-all-creative-query";
+import { useGetWallet } from "@/application/use-cases/get-wallet-query";
+
+import { loadStripe } from "@stripe/stripe-js";
+import { Elements } from "@stripe/react-stripe-js";
+import { CampaignCheckoutForm } from "../components/campaing-checkout-form";
+import { Link } from "react-router";
+import { useCampaignForm } from "../hooks/use-campaign-form";
+import { STRIPE_SECRET_KEY } from "@/domain/constants/stripe";
 
 const FORM_STEPS = [
   {
@@ -99,96 +102,30 @@ const FORM_STEPS = [
   },
 ];
 
-const CREATIVE_SUPPORTS = [
-  {
-    id: "annonce",
-    title: "Annonce",
-    cost: 0,
-  },
-  {
-    id: "banner",
-    title: "Bannière",
-    cost: 150,
-  },
-  {
-    id: "landing-page",
-    title: "Landing page",
-    cost: 300,
-  },
-  {
-    id: "email-template",
-    title: "Email template",
-    cost: 100,
-  },
-  {
-    id: "video",
-    title: "Video promotionnelle",
-    cost: 500,
-  },
-];
-
-const OBJECTIVES = [
-  {
-    id: "lead-generation",
-    title: "Génération de leads simples",
-    description: "Collecte de contacts qualifiés pour votre entreprise",
-    estimatedCost: 35,
-    icon: Target,
-    tooltip: "Coût estimé par lead généré.",
-  },
-  {
-    id: "appointment",
-    title: "Rendez-vous qualifiés",
-    description: "Génération de RDV commerciaux qualifiés",
-    estimatedCost: 45,
-    icon: CalendarDays,
-    tooltip: "Coût estimé par rendez-vous pris.",
-  },
-  {
-    id: "callback",
-    title: "Appels / Rappels",
-    description: "Demandes de contact téléphonique",
-    estimatedCost: 30,
-    icon: Phone,
-    tooltip: "Coût estimé par appel/rappel.",
-  },
-  {
-    id: "quote",
-    title: "Demande de devis",
-    description: "Collecte de demandes de devis qualifiées",
-    estimatedCost: 50,
-    icon: Calculator,
-    tooltip: "Coût estimé par devis qualifié.",
-  },
-  {
-    id: "conversion",
-    title: "Conversion commerciale",
-    description: "Paiement uniquement sur vente confirmée",
-    estimatedCost: 0,
-    icon: ShoppingCart,
-    tooltip: "Paiement uniquement sur vente confirmée.",
-  },
-];
-
 const BTP_CATEGORIES = [
-  "Maçonnerie",
-  "Plomberie",
-  "Électricité",
-  "Peinture",
-  "Menuiserie",
-  "Charpente",
-  "Couverture",
-  "Plâtrerie",
-  "Carrelage",
-  "Chauffage",
-  "Autre",
+  "Bâtiment et Travaux Publics (BTP)",
+  "Énergies et Environnement",
+  "Immobilier et Aménagement",
+  "Assurance et Gestion des Risques",
+  "Banque et Services Financiers",
+  "Industrie Automobile et Mobilité",
+  "Autres Secteurs d’Activité",
 ];
+
+const stripePromise = loadStripe(STRIPE_SECRET_KEY);
 
 export default function CreateCampaign() {
   const { updateBreadcrumb } = useLayoutContext();
-  const form = useForm<CreateCampaignDto>({
-    resolver: zodResolver(createCampaignSchema),
-  });
+
+  const [currentStep, setCurrentStep] = useState(1);
+  const [upladContactListFile, setUpladContactListFile] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+
+  const { data: objectives } = useGetAllCampaignObjective();
+  const { data: creatives } = useGetAllCreative();
+  const { data: wallet } = useGetWallet();
+
+  const form = useCampaignForm();
 
   const [
     { files, isDragging, errors },
@@ -200,7 +137,7 @@ export default function CreateCampaign() {
       const file = files.length > 0 ? files[0] || null : null;
 
       if (file) {
-        form.setValue("qualificationFile", file.file as File);
+        form.setValue("contacts_file", file.file as File);
       }
     },
   });
@@ -223,21 +160,21 @@ export default function CreateCampaign() {
       const file = files.length > 0 ? files[0] || null : null;
 
       if (file) {
-        form.setValue("qualificationFile", file.file as File);
+        form.setValue("logo", file.file as File);
       }
     },
   });
 
   const [
-    { files: brandGuidelinesFiles, isDragging: brandGuidelinesIsDragging, errors: brandGuidelinesErrors },
+    { files: visuelIdentityFiles, isDragging: visuelIdentityIsDragging, errors: visuelIdentityErrors },
     {
-      handleDragEnter: brandGuidelinesHandleDragEnter,
-      handleDragLeave: brandGuidelinesHandleDragLeave,
-      handleDragOver: brandGuidelinesHandleDragOver,
-      handleDrop: brandGuidelinesHandleDrop,
-      openFileDialog: brandGuidelinesOpenFileDialog,
-      removeFile: brandGuidelinesRemoveFile,
-      getInputProps: brandGuidelinesGetInputProps,
+      handleDragEnter: visuelIdentityHandleDragEnter,
+      handleDragLeave: visuelIdentityHandleDragLeave,
+      handleDragOver: visuelIdentityHandleDragOver,
+      handleDrop: visuelIdentityHandleDrop,
+      openFileDialog: visuelIdentityOpenFileDialog,
+      removeFile: visuelIdentityRemoveFile,
+      getInputProps: visuelIdentityGetInputProps,
     },
   ] = useFileUpload({
     maxSize: UPLOAD_FILE_MAX_SIZE,
@@ -246,21 +183,21 @@ export default function CreateCampaign() {
       const file = files.length > 0 ? files[0] || null : null;
 
       if (file) {
-        form.setValue("brandGuidelines", file.file as File);
+        form.setValue("visuel_identify", file.file as File);
       }
     },
   });
 
   const [
-    { files: additionalVisualsFiles, isDragging: additionalVisualsIsDragging, errors: additionalVisualsErrors },
+    { files: moreVisuelFIlesFiles, isDragging: moreVisuelFIlesIsDragging, errors: moreVisuelFIlesErrors },
     {
-      handleDragEnter: additionalVisualsHandleDragEnter,
-      handleDragLeave: additionalVisualsHandleDragLeave,
-      handleDragOver: additionalVisualsHandleDragOver,
-      handleDrop: additionalVisualsHandleDrop,
-      openFileDialog: additionalVisualsOpenFileDialog,
-      removeFile: additionalVisualsRemoveFile,
-      getInputProps: additionalVisualsGetInputProps,
+      handleDragEnter: moreVisuelFIlesHandleDragEnter,
+      handleDragLeave: moreVisuelFIlesHandleDragLeave,
+      handleDragOver: moreVisuelFIlesHandleDragOver,
+      handleDrop: moreVisuelFIlesHandleDrop,
+      openFileDialog: moreVisuelFIlesOpenFileDialog,
+      removeFile: moreVisuelFIlesRemoveFile,
+      getInputProps: moreVisuelFIlesGetInputProps,
     },
   ] = useFileUpload({
     multiple: true,
@@ -268,79 +205,97 @@ export default function CreateCampaign() {
     initialFiles: [],
     onFilesChange: (files) => {
       const visuals = files.length > 0 ? files.map((file) => file.file) : [];
-      form.setValue("additionalVisuals", visuals as File[]);
+      form.setValue("visuel", visuals as File[]);
     },
   });
 
-  const qualificationContactListFile = files[0] || null;
+  const contactListFile = files[0] || null;
   const logoFile = logoFiles[0] || null;
-  const brandGuidelinesFile = brandGuidelinesFiles[0] || null;
-
-  const [currentStep, setCurrentStep] = useState(1);
+  const visuelIdentityFile = visuelIdentityFiles[0] || null;
 
   const nextStep = () => {
-    if (currentStep < 5) setCurrentStep(currentStep + 1);
+    if (currentStep < 6) setCurrentStep(currentStep + 1);
+    handleScrollToStep();
   };
 
   const prevStep = () => {
     if (currentStep > 1) setCurrentStep(currentStep - 1);
+    handleScrollToStep();
   };
 
   const handleNext = () => nextStep();
   const handlePrevious = () => prevStep();
 
+  const handleReset = () => {
+    form.reset();
+    setCurrentStep(1);
+    setErrorMessage("");
+  };
+
+  const handleScrollToStep = () => {
+    setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 100);
+  };
+
   const handleObjectiveTypeChange = (value: boolean) => {
-    form.setValue("objectiveType", value ? "qualification" : "classic");
-    form.setValue("classicObjective", "");
-    removeFile(qualificationContactListFile.id);
+    setUpladContactListFile(value);
+    form.setValue("campaign_objective_id", "");
+    removeFile(contactListFile.id);
   };
 
   const handleSelectObjective = (value: string) => {
-    form.setValue("classicObjective", value);
-    form.setValue("commissionModel", "");
-    form.setValue("commissionValue", "");
+    form.setValue("campaign_objective_id", value);
+    form.setValue("commission_model", "");
+    form.setValue("commission_value", "");
     form.setValue("budget", "");
-    form.setValue("eligibilityConditions", []);
+    form.setValue("validation_condition_selected", []);
   };
 
   const handleEligibilityConditionsChange = (checked: boolean | "indeterminate", condition: string) => {
-    const conditions = form.watch("eligibilityConditions") || [];
+    const conditions = form.watch("validation_condition_selected") || [];
     if (checked && checked !== "indeterminate") {
-      form.setValue("eligibilityConditions", [...conditions, condition]);
+      form.setValue("validation_condition_selected", [...conditions, condition]);
     } else {
       form.setValue(
-        "eligibilityConditions",
+        "validation_condition_selected",
         conditions.filter((id) => id !== condition)
       );
     }
   };
 
   const handleCreativeSupportsChange = (checked: boolean | "indeterminate", support: string) => {
-    const supports = form.watch("creativeSupports") || [];
+    const supports = form.watch("campaign_selected_creatives") || [];
     if (checked && checked !== "indeterminate") {
-      form.setValue("creativeSupports", [...supports, support]);
+      form.setValue("campaign_selected_creatives", [...supports, support]);
     } else {
       form.setValue(
-        "creativeSupports",
+        "campaign_selected_creatives",
         supports.filter((id) => id !== support)
       );
     }
   };
 
-  const getObjective = () => {
-    const objectif = OBJECTIVES.find((obj) => obj.id === form.getValues("classicObjective"));
-    return objectif ? objectif.title : "Non défini";
-  };
+  const selectedObjective = form.watch("campaign_objective_id");
+  const selectedCreatives = form.watch("campaign_selected_creatives");
+  const budget = Number(form.watch("budget") || 0);
+  const walletBalance = Number(wallet?.balance || 0);
 
-  const getCreativeSupports = () => {
-    return CREATIVE_SUPPORTS.filter((support) => (form.getValues("creativeSupports") || []).includes(support.id));
-  };
+  const objective = useMemo(() => {
+    return objectives?.find((obj) => obj.id.toString() === selectedObjective);
+  }, [selectedObjective, objectives]);
 
-  const getMontantTotal = () => {
-    return (
-      getCreativeSupports().reduce((total, support) => total + support.cost, 0) + Number(form.getValues("budget") || 0)
-    );
-  };
+  const creativeSupports = useMemo(() => {
+    return creatives?.filter((support) => (selectedCreatives || []).includes(support.code)) || [];
+  }, [selectedCreatives, creatives]);
+
+  const creativeCost = useMemo(() => {
+    return creativeSupports?.reduce((total, support) => total + support.price, 0);
+  }, [creativeSupports]);
+
+  const paymentAmount = useMemo(() => {
+    const totalCost = budget + creativeCost;
+    if (walletBalance >= totalCost) return 0;
+    return totalCost - walletBalance;
+  }, [budget, creativeCost, walletBalance]);
 
   const renderStepIndicator = () => (
     <div className="flex items-center justify-between mt-2">
@@ -414,6 +369,23 @@ export default function CreateCampaign() {
 
           <Card className="pt-10 px-8">{renderStepIndicator()}</Card>
 
+          {errorMessage && (
+            <div className="flex items-center gap-2 text-destructive p-4 min-h-12 text-sm bg-destructive/10 font-medium rounded-lg">
+              <Info className="size-5 text-destructive shrink-0" />
+              <span className="text-sm text-destructive">{errorMessage}</span>
+            </div>
+          )}
+
+          {Object.entries(form.formState.errors).length > 0 && (
+            <div className="flex gap- text-destructive p-4 min-h-12 text-sm bg-destructive/10 font-medium rounded-lg">
+              <ul className="list-disc list-inside">
+                {Object.entries(form.formState.errors).map(([key, error]) => (
+                  <li key={key}>{error.message}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
           {currentStep === 1 && (
             <Card>
               <CardHeader className="border-b border-dashed">
@@ -422,6 +394,34 @@ export default function CreateCampaign() {
               </CardHeader>
 
               <CardContent className="space-y-8">
+                <FormField
+                  control={form.control}
+                  name="category"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Secteur d'activité</FormLabel>
+                      <Select value={field.value} onValueChange={(value) => field.onChange(value)}>
+                        <SelectTrigger className="w-full">
+                          <FormControl>
+                            <SelectValue placeholder="Sélectionnez votre secteur d'activité" />
+                          </FormControl>
+                        </SelectTrigger>
+                        <SelectContent>
+                          {BTP_CATEGORIES.map((category) => (
+                            <SelectItem key={category} value={category}>
+                              {category}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className="h-px border-t border-dashed" />
+
                 <FormField
                   control={form.control}
                   name="name"
@@ -456,12 +456,16 @@ export default function CreateCampaign() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
-                    name="startDate"
+                    name="start_date"
                     render={({ field }) => (
                       <FormItem className="flex flex-col">
                         <FormLabel>Date de début</FormLabel>
                         <FormControl>
-                          <DatePicker value={field.value} onChange={(date) => field.onChange(date)} />
+                          <DatePicker
+                            value={field.value}
+                            onChange={(date) => field.onChange(date)}
+                            disabledUntil={new Date()}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -470,44 +474,29 @@ export default function CreateCampaign() {
 
                   <FormField
                     control={form.control}
-                    name="endDate"
+                    name="end_date"
                     render={({ field }) => (
                       <FormItem className="flex flex-col">
                         <FormLabel>Date de fin</FormLabel>
                         <FormControl>
-                          <DatePicker value={field.value} onChange={(date) => field.onChange(date)} />
+                          <DatePicker
+                            value={field.value}
+                            onChange={(date) => field.onChange(date)}
+                            disabledUntil={form.watch("start_date") || new Date()}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                </div>
 
-                <FormField
-                  control={form.control}
-                  name="category"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Secteur d'activité</FormLabel>
-                      <Select value={field.value} onValueChange={(value) => field.onChange(value)}>
-                        <SelectTrigger className="w-full">
-                          <FormControl>
-                            <SelectValue placeholder="Sélectionnez votre secteur d'activité" />
-                          </FormControl>
-                        </SelectTrigger>
-                        <SelectContent>
-                          {BTP_CATEGORIES.map((category) => (
-                            <SelectItem key={category} value={category}>
-                              {category}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-
-                      <FormMessage />
-                    </FormItem>
+                  {form.watch("start_date") && form.watch("end_date") && (
+                    <div className="col-span-2 text-sm text-info flex items-center gap-2">
+                      <Info className="size-3.5 shrink-0" /> Approximativement{" "}
+                      {formatIntervalDateToHuman(form.watch("start_date"), form.watch("end_date"))} de campagne
+                    </div>
                   )}
-                />
+                </div>
               </CardContent>
             </Card>
           )}
@@ -516,32 +505,21 @@ export default function CreateCampaign() {
             <>
               <Card className="px-6">
                 <div className="space-y-6">
-                  <FormField
-                    control={form.control}
-                    name="objectiveType"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-center justify-between">
-                        <div className="space-y-1">
-                          <FormLabel className="text-base">Qualification de contacts existants</FormLabel>
-                          <FormDescription className="text-sm">
-                            Téléversez votre fichier de contacts à qualifier. Aucun lead externe ne sera généré.
-                          </FormDescription>
-                        </div>
-                        <FormControl>
-                          <Switch
-                            checked={field.value === "qualification"}
-                            onCheckedChange={handleObjectiveTypeChange}
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
+                  <div className="flex flex-row items-center justify-between">
+                    <div className="space-y-1">
+                      <Label className="text-base">Qualification de contacts existants</Label>
+                      <div className="text-sm text-muted-foreground">
+                        Téléversez votre fichier de contacts à qualifier. Aucun lead externe ne sera généré.
+                      </div>
+                    </div>
+                    <Switch checked={upladContactListFile} onCheckedChange={handleObjectiveTypeChange} />
+                  </div>
 
-                  {form.watch("objectiveType") === "qualification" && (
+                  {upladContactListFile && (
                     <>
                       {errors.length > 0 && <ErrorMessage message={errors[0]} />}
 
-                      {!qualificationContactListFile && (
+                      {!contactListFile && (
                         <div
                           role="button"
                           onClick={openFileDialog}
@@ -556,7 +534,7 @@ export default function CreateCampaign() {
                             {...getInputProps()}
                             className="sr-only"
                             aria-label="Upload file"
-                            disabled={Boolean(qualificationContactListFile)}
+                            disabled={Boolean(contactListFile)}
                           />
 
                           <div className="flex flex-col items-center justify-center text-center">
@@ -574,17 +552,15 @@ export default function CreateCampaign() {
                         </div>
                       )}
 
-                      {qualificationContactListFile && (
+                      {contactListFile && (
                         <div
-                          key={qualificationContactListFile.id}
+                          key={contactListFile.id}
                           className="flex items-center justify-between gap-2 rounded-lg bg-background border border-dashed px-4 py-2"
                         >
                           <div className="flex items-center gap-3 overflow-hidden">
                             <FileText className="size-4 shrink-0 opacity-60" aria-hidden="true" />
                             <div className="min-w-0">
-                              <p className="truncate text-[13px] font-medium">
-                                {qualificationContactListFile.file.name}
-                              </p>
+                              <p className="truncate text-[13px] font-medium">{contactListFile.file.name}</p>
                             </div>
                           </div>
 
@@ -613,7 +589,7 @@ export default function CreateCampaign() {
                 <CardContent className="space-y-8">
                   <FormField
                     control={form.control}
-                    name="classicObjective"
+                    name="campaign_objective_id"
                     render={({ field }) => (
                       <FormItem className="space-y-3">
                         <FormControl>
@@ -622,36 +598,34 @@ export default function CreateCampaign() {
                             value={field.value}
                             onValueChange={handleSelectObjective}
                           >
-                            {OBJECTIVES.map((objective) => (
+                            {objectives?.map((objective) => (
                               <FormItem
                                 key={`campaign-objective-${objective.id}-item`}
                                 className="border-input has-data-[state=checked]:border-transparent has-data-[state=checked]:ring-3 has-data-[state=checked]:ring-primary/50 relative flex w-full items-start gap-2 rounded-md border p-4 shadow-xs outline-none"
                               >
                                 <FormControl>
                                   <RadioGroupItem
-                                    value={objective.id}
+                                    value={objective.id.toString()}
                                     id={`campaign-objective-${objective.id}-radio`}
                                     aria-describedby={`campaign-objective-${objective.id}-description`}
                                     className="order-1 after:absolute after:inset-0"
                                   />
                                 </FormControl>
+
                                 <div className="font-normal flex grow items-start gap-3">
-                                  <div className="bg-accent rounded-lg p-2 size-8 flex items-center justify-center shrink-0">
-                                    <objective.icon className="size-4" />
-                                  </div>
                                   <div className="grid grow gap-2">
-                                    <FormLabel htmlFor={`campaign-objective-${objective.id}`}>
-                                      {objective.title}
+                                    <FormLabel htmlFor={`campaign-objective-${objective.code}`}>
+                                      {objective.name}
                                     </FormLabel>
                                     <p
-                                      id={`campaign-objective-${objective.id}-description`}
+                                      id={`campaign-objective-${objective.code}-description`}
                                       className="text-muted-foreground text-xs"
                                     >
                                       {objective.description}
                                     </p>
-                                    {!!objective.estimatedCost && objective.estimatedCost > 0 && (
+                                    {!!objective.price_lead && Number(objective.price_lead) > 0 && (
                                       <Badge size="xs" variant="accent" className="text-[0.7rem] px-2 py-0.5">
-                                        ~{formatCurrency(objective.estimatedCost)}
+                                        ~{formatCurrency(Number(objective.price_lead))}
                                       </Badge>
                                     )}
                                   </div>
@@ -665,7 +639,7 @@ export default function CreateCampaign() {
                     )}
                   />
 
-                  {form.watch("classicObjective") === "conversion" && (
+                  {objective?.code === "sale_confirmed" && (
                     <div className="rounded-lg p-6 border border-dashed space-y-8">
                       <div className="pb-2">
                         <div className="text-lg font-semibold">Modèle de commission</div>
@@ -677,7 +651,7 @@ export default function CreateCampaign() {
                       <div className="space-y-6">
                         <FormField
                           control={form.control}
-                          name="commissionModel"
+                          name="commission_model"
                           render={({ field }) => (
                             <FormItem className="space-y-2">
                               <FormControl>
@@ -706,19 +680,29 @@ export default function CreateCampaign() {
                           )}
                         />
 
-                        {form.watch("commissionModel") && (
+                        {form.watch("commission_model") === "fixed" && (
                           <FormField
                             control={form.control}
-                            name="commissionValue"
+                            name="commission_value"
                             render={({ field }) => (
                               <FormItem className="flex flex-col">
                                 <FormControl>
-                                  <Input
-                                    placeholder={
-                                      form.watch("commissionModel") === "fixed" ? "Ex: 50 pour 50€" : "Ex: 10 pour 10%"
-                                    }
-                                    {...field}
-                                  />
+                                  <Input placeholder="Ex: 50 pour 50€" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        )}
+
+                        {form.watch("commission_model") === "percentage" && (
+                          <FormField
+                            control={form.control}
+                            name="conversion_rate"
+                            render={({ field }) => (
+                              <FormItem className="flex flex-col">
+                                <FormControl>
+                                  <Input placeholder="Ex: 10 pour 10%" {...field} />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
@@ -760,65 +744,49 @@ export default function CreateCampaign() {
                   )}
                 />
 
-                {form.watch("classicObjective") === "lead-generation" ? (
-                  <div className="flex items-center space-x-2 h-12 p-4 bg-success/10 rounded-lg">
-                    <CheckCircle className="h-5 w-5 text-success" />
-                    <span className="text-sm">
-                      Le lead doit avoir rempli le formulaire avec un nom et un numéro de téléphone valides.
-                    </span>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    <h3 className="font-semibold text-lg">Conditions de validation</h3>
-
-                    <div className="divide-y divide-dashed">
-                      {[
-                        {
-                          id: "signed-quote",
-                          label: "Devis signé",
-                          description: "Le prospect a accepté une estimation",
-                        },
-                        {
-                          id: "appointment-booked",
-                          label: "RDV pris",
-                          description: "Un créneau a été réservé pour échange",
-                        },
-                        {
-                          id: "confirmed-sale",
-                          label: "Vente confirmée",
-                          description: "Action commerciale réalisée",
-                        },
-                        {
-                          id: "qualified-lead",
-                          label: "Fiche qualifiée",
-                          description: "Lead validé manuellement ou via scoring",
-                        },
-                      ].map((condition) => {
-                        const isSelected = (form.watch("eligibilityConditions") || []).includes(condition.id);
-
-                        return (
-                          <div className="flex items-start gap-2 py-4 boder">
-                            <Checkbox
-                              checked={isSelected}
-                              onCheckedChange={(checked) => handleEligibilityConditionsChange(checked, condition.id)}
-                              id={condition.id}
-                              aria-describedby={`campaign-eligibility-conditions-${condition.id}-description`}
-                            />
-                            <div className="grid grow gap-1.5">
-                              <Label htmlFor={condition.id}>{condition.label}</Label>
-                              <p
-                                id={`campaign-eligibility-conditions-${condition.id}-description`}
-                                className="text-muted-foreground text-xs"
-                              >
-                                {condition.description}
-                              </p>
-                            </div>
-                          </div>
-                        );
-                      })}
+                {objective &&
+                  (!objective?.validation_conditions || objective?.validation_conditions.length === 0 ? (
+                    <div className="flex items-center space-x-2 h-12 p-4 bg-success/10 rounded-lg">
+                      <CheckCircle className="h-5 w-5 text-success" />
+                      <span className="text-sm">
+                        Le lead doit avoir rempli le formulaire avec un nom et un numéro de téléphone valides.
+                      </span>
                     </div>
-                  </div>
-                )}
+                  ) : (
+                    <div className="space-y-3">
+                      <h3 className="font-semibold text-lg">Conditions de validation</h3>
+
+                      <div className="divide-y divide-dashed">
+                        {objective?.validation_conditions?.map((condition) => {
+                          const isSelected = (form.watch("validation_condition_selected") || []).includes(
+                            condition.name
+                          );
+
+                          return (
+                            <div className="flex items-start gap-2 py-4 boder">
+                              <Checkbox
+                                checked={isSelected}
+                                onCheckedChange={(checked) =>
+                                  handleEligibilityConditionsChange(checked, condition.name)
+                                }
+                                id={condition.name}
+                                aria-describedby={`campaign-eligibility-conditions-${condition.name}-description`}
+                              />
+                              <div className="grid grow gap-1.5">
+                                <Label htmlFor={condition.name}>{condition.label}</Label>
+                                <p
+                                  id={`campaign-eligibility-conditions-${condition.description}-description`}
+                                  className="text-muted-foreground text-xs"
+                                >
+                                  {condition.description}
+                                </p>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
               </CardContent>
             </Card>
           )}
@@ -915,24 +883,24 @@ export default function CreateCampaign() {
                         </p>
                       </div>
 
-                      {brandGuidelinesErrors.length > 0 && <ErrorMessage message={brandGuidelinesErrors[0]} />}
+                      {visuelIdentityErrors.length > 0 && <ErrorMessage message={visuelIdentityErrors[0]} />}
 
-                      {!brandGuidelinesFile && (
+                      {!visuelIdentityFile && (
                         <div
                           role="button"
-                          onClick={brandGuidelinesOpenFileDialog}
-                          onDragEnter={brandGuidelinesHandleDragEnter}
-                          onDragLeave={brandGuidelinesHandleDragLeave}
-                          onDragOver={brandGuidelinesHandleDragOver}
-                          onDrop={brandGuidelinesHandleDrop}
-                          data-dragging={brandGuidelinesIsDragging || undefined}
+                          onClick={visuelIdentityOpenFileDialog}
+                          onDragEnter={visuelIdentityHandleDragEnter}
+                          onDragLeave={visuelIdentityHandleDragLeave}
+                          onDragOver={visuelIdentityHandleDragOver}
+                          onDrop={visuelIdentityHandleDrop}
+                          data-dragging={visuelIdentityIsDragging || undefined}
                           className="border-input hover:bg-accent/50 data-[dragging=true]:bg-accent/50 has-[input:focus]:border-ring has-[input:focus]:ring-ring/50 flex min-h-40 flex-col items-center justify-center rounded-xl border border-dashed p-4 transition-colors has-disabled:pointer-events-none has-disabled:opacity-50 has-[input:focus]:ring-[3px]"
                         >
                           <input
-                            {...brandGuidelinesGetInputProps()}
+                            {...visuelIdentityGetInputProps()}
                             className="sr-only"
                             aria-label="Upload brand guidelines"
-                            disabled={Boolean(brandGuidelinesFile)}
+                            disabled={Boolean(visuelIdentityFile)}
                           />
 
                           <div className="flex flex-col items-center justify-center text-center">
@@ -949,15 +917,15 @@ export default function CreateCampaign() {
                         </div>
                       )}
 
-                      {brandGuidelinesFile && (
+                      {visuelIdentityFile && (
                         <div
-                          key={brandGuidelinesFile.id}
+                          key={visuelIdentityFile.id}
                           className="flex items-center justify-between gap-2 rounded-lg bg-background border border-dashed px-4 py-2"
                         >
                           <div className="flex items-center gap-3 overflow-hidden">
                             <FileText className="size-4 shrink-0 opacity-60" aria-hidden="true" />
                             <div className="min-w-0">
-                              <p className="truncate text-[13px] font-medium">{brandGuidelinesFile.file.name}</p>
+                              <p className="truncate text-[13px] font-medium">{visuelIdentityFile.file.name}</p>
                             </div>
                           </div>
 
@@ -965,7 +933,7 @@ export default function CreateCampaign() {
                             size="icon-sm"
                             variant="accent"
                             className="-me-2"
-                            onClick={() => brandGuidelinesRemoveFile(brandGuidelinesFile?.id)}
+                            onClick={() => visuelIdentityRemoveFile(visuelIdentityFile?.id)}
                             aria-label="Remove brand guidelines"
                           >
                             <Trash className="size-4" aria-hidden="true" />
@@ -977,7 +945,7 @@ export default function CreateCampaign() {
 
                   <FormField
                     control={form.control}
-                    name="websiteUrl"
+                    name="website"
                     render={({ field }) => (
                       <FormItem className="flex flex-col">
                         <FormLabel>URL de votre site internet</FormLabel>
@@ -1000,20 +968,20 @@ export default function CreateCampaign() {
                 </CardHeader>
 
                 <CardContent className="space-y-3">
-                  {additionalVisualsErrors.length > 0 && <ErrorMessage message={additionalVisualsErrors[0]} />}
+                  {moreVisuelFIlesErrors.length > 0 && <ErrorMessage message={moreVisuelFIlesErrors[0]} />}
 
                   <div
                     role="button"
-                    onClick={additionalVisualsOpenFileDialog}
-                    onDragEnter={additionalVisualsHandleDragEnter}
-                    onDragLeave={additionalVisualsHandleDragLeave}
-                    onDragOver={additionalVisualsHandleDragOver}
-                    onDrop={additionalVisualsHandleDrop}
-                    data-dragging={additionalVisualsIsDragging || undefined}
+                    onClick={moreVisuelFIlesOpenFileDialog}
+                    onDragEnter={moreVisuelFIlesHandleDragEnter}
+                    onDragLeave={moreVisuelFIlesHandleDragLeave}
+                    onDragOver={moreVisuelFIlesHandleDragOver}
+                    onDrop={moreVisuelFIlesHandleDrop}
+                    data-dragging={moreVisuelFIlesIsDragging || undefined}
                     className="border-input hover:bg-accent/50 data-[dragging=true]:bg-accent/50 has-[input:focus]:border-ring has-[input:focus]:ring-ring/50 flex min-h-20 flex-col items-center justify-center rounded-xl border border-dashed p-4 transition-colors has-disabled:pointer-events-none has-disabled:opacity-50 has-[input:focus]:ring-[3px]"
                   >
                     <input
-                      {...additionalVisualsGetInputProps()}
+                      {...moreVisuelFIlesGetInputProps()}
                       className="sr-only"
                       aria-label="Upload brand guidelines"
                     />
@@ -1031,9 +999,9 @@ export default function CreateCampaign() {
                     </div>
                   </div>
 
-                  {additionalVisualsFiles.length > 0 && (
+                  {moreVisuelFIlesFiles.length > 0 && (
                     <div className="space-y-2.5">
-                      {additionalVisualsFiles.map((file) => (
+                      {moreVisuelFIlesFiles.map((file) => (
                         <div
                           key={file.id}
                           className="flex items-center justify-between gap-2 rounded-lg bg-background border border-dashed px-4 py-2"
@@ -1049,7 +1017,7 @@ export default function CreateCampaign() {
                             size="icon-sm"
                             variant="accent"
                             className="-me-2"
-                            onClick={() => additionalVisualsRemoveFile(file.id)}
+                            onClick={() => moreVisuelFIlesRemoveFile(file.id)}
                             aria-label="Remove brand guidelines"
                           >
                             <Trash className="size-4" aria-hidden="true" />
@@ -1063,24 +1031,27 @@ export default function CreateCampaign() {
 
               <Card>
                 <CardHeader className="border-b border-dashed">
-                  <CardTitle>Sélection des supports créatifs</CardTitle>
+                  <div className="flex items-center justify-between gap-2">
+                    <CardTitle>Sélection des supports créatifs</CardTitle>
+                    <div className="text-lg font-semibold">{formatCurrency(creativeCost)}</div>
+                  </div>
                 </CardHeader>
 
-                <CardContent>
+                <CardContent className="pt-0">
                   <div className="divide-y divide-dashed">
-                    {CREATIVE_SUPPORTS.map((support) => {
-                      const isSelected = (form.watch("creativeSupports") || []).includes(support.id);
+                    {creatives?.map((support) => {
+                      const isSelected = (form.watch("campaign_selected_creatives") || []).includes(support.code);
 
                       return (
                         <div
                           className="flex items-center gap-2 py-4"
-                          key={`campaign-creative-support-${support.id}-item`}
+                          key={`campaign-creative-support-${support.code}-item`}
                         >
-                          {support.cost > 0 ? (
+                          {support.price > 0 ? (
                             <Checkbox
                               checked={isSelected}
-                              onCheckedChange={(checked) => handleCreativeSupportsChange(checked, support.id)}
-                              id={`campaign-creative-support-${support.id}`}
+                              onCheckedChange={(checked) => handleCreativeSupportsChange(checked, support.code)}
+                              id={`campaign-creative-support-${support.code}`}
                             />
                           ) : (
                             <span className="text-success-foreground bg-success/50 rounded-full size-5 flex items-center justify-center">
@@ -1088,13 +1059,13 @@ export default function CreateCampaign() {
                             </span>
                           )}
                           <Label
-                            htmlFor={`campaign-creative-support-${support.id}`}
-                            className="flex items-center justify-between gap-4 w-full text-base"
+                            htmlFor={`campaign-creative-support-${support.code}`}
+                            className="flex items-center justify-between gap-4 w-full"
                           >
-                            <span>{support.title}</span>
-                            {support.cost > 0 ? (
+                            <span>{support.description}</span>
+                            {support.price > 0 ? (
                               <span className="text-muted-foreground bg-accent/50 text-sm border border-dashed px-2 py-1 rounded">
-                                {formatCurrency(support.cost)}
+                                {formatCurrency(support.price)}
                               </span>
                             ) : (
                               <span className="text-success bg-success/10 text-sm border border-success/10 border-dashed px-2 py-1 rounded">
@@ -1129,19 +1100,19 @@ export default function CreateCampaign() {
                       <div className="space-y-1">
                         <p className="text-xs text-muted-foreground">Période</p>
                         <p className="font-medium">
-                          {form.getValues("startDate") &&
-                          formatDateFromPattern(form.getValues("startDate"), "dd/MM/yyyy")
+                          {form.getValues("start_date") &&
+                          formatDateFromPattern(form.getValues("start_date"), "dd/MM/yyyy")
                             ? `${formatDateFromPattern(
-                                form.getValues("startDate"),
+                                form.getValues("start_date"),
                                 "dd/MM/yyyy"
-                              )} - ${formatDateFromPattern(form.getValues("endDate"), "dd/MM/yyyy")}`
+                              )} - ${formatDateFromPattern(form.getValues("end_date"), "dd/MM/yyyy")}`
                             : "Non définie"}
                         </p>
                       </div>
 
                       <div className="space-y-1">
                         <p className="text-xs text-muted-foreground">Objectif</p>
-                        <p className="font-medium">{getObjective()}</p>
+                        <p className="font-medium">{objective?.name || "Non défini"}</p>
                       </div>
 
                       <div className="space-y-1">
@@ -1158,9 +1129,7 @@ export default function CreateCampaign() {
                   <CardHeader className="border-b border-dashed">
                     <CardTitle className="flex items-center justify-between">
                       <span>Éléments créatifs</span>
-                      <span>
-                        {formatCurrency(getCreativeSupports().reduce((total, support) => total + support.cost, 0))}
-                      </span>
+                      <span>{formatCurrency(creativeCost)}</span>
                     </CardTitle>
                   </CardHeader>
 
@@ -1172,15 +1141,15 @@ export default function CreateCampaign() {
                       </span>
                     </div>
 
-                    {getCreativeSupports().map((support) => {
+                    {creativeSupports.map((support) => {
                       return (
                         <div
-                          key={`selected-creative-support-${support.id}`}
+                          key={`selected-creative-support-${support.name}`}
                           className="flex items-center justify-between gap-4 w-full"
                         >
-                          <span>{support.title}</span>
+                          <span>{support.name}</span>
                           <span className="text-muted-foreground bg-accent/50 text-sm border border-dashed px-2 py-1 rounded">
-                            {formatCurrency(support.cost)}
+                            {formatCurrency(support.price)}
                           </span>
                         </div>
                       );
@@ -1188,9 +1157,7 @@ export default function CreateCampaign() {
                   </CardContent>
                   <CardFooter className="border-t border-dashed flex items-center justify-between text-lg font-semibold">
                     <span>Montant total</span>
-                    <span>
-                      {formatCurrency(getCreativeSupports().reduce((total, support) => total + support.cost, 0))}
-                    </span>
+                    <span>{formatCurrency(creativeCost)}</span>
                   </CardFooter>
                 </Card>
               </div>
@@ -1204,7 +1171,7 @@ export default function CreateCampaign() {
                   <div className="bg-accent/60 p-4 rounded-md mb-6">
                     <div className="flex justify-between items-center">
                       <p className="text-lg">Solde actuel</p>
-                      <p className="font-bold text-2xl">{500} €</p>
+                      <p className="font-bold text-2xl">{formatCurrency(walletBalance)}</p>
                     </div>
                   </div>
 
@@ -1216,17 +1183,17 @@ export default function CreateCampaign() {
 
                     <div className="flex justify-between text-sm text-muted-foreground">
                       <p>Éléments créatifs</p>
-                      <p>{formatCurrency(getCreativeSupports().reduce((total, support) => total + support.cost, 0))}</p>
+                      <p>{formatCurrency(creativeCost)}</p>
                     </div>
 
                     <div className="flex justify-between font-medium border-t pt-3 mt-3">
                       <p>Total à charger</p>
-                      <p>{formatCurrency(getMontantTotal())}</p>
+                      <p>{formatCurrency(paymentAmount)}</p>
                     </div>
 
                     <div className="flex justify-between text-warning/80 font-medium">
                       <p>À débiter maintenant</p>
-                      <p>{formatCurrency(getCreativeSupports().reduce((total, support) => total + support.cost, 0))}</p>
+                      <p>{formatCurrency(creativeCost)}</p>
                     </div>
                   </div>
 
@@ -1235,34 +1202,94 @@ export default function CreateCampaign() {
                     montant sera simplement chargé et activé lors du lancement de la campagne.
                   </div>
 
-                  <div className="text-base font-semibold border border-dashed p-4 rounded-md text-center">
-                    Recharge nécessaire: {formatCurrency(getMontantTotal() - 500 > 0 ? getMontantTotal() - 500 : 0)}
-                  </div>
-
-                  <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
-                    <CreditCard />
-                    {form.formState.isSubmitting ? "Paiement en cours..." : "Payer & Planifier la campagne"}
-                  </Button>
+                  <Elements stripe={stripePromise}>
+                    <CampaignCheckoutForm
+                      form={form}
+                      paymentAmount={paymentAmount}
+                      onSuccess={nextStep}
+                      onError={setErrorMessage}
+                      handlePrevious={handlePrevious}
+                    />
+                  </Elements>
                 </CardContent>
               </Card>
             </div>
           )}
 
-          <div className="flex justify-between">
-            <Button variant="outline" onClick={handlePrevious} disabled={currentStep === 1}>
-              <ArrowLeft />
-              Précédent
-            </Button>
+          {currentStep === 6 && (
+            <Card>
+              <CardContent className="p-10 text-center space-y-8">
+                <div className="flex justify-center">
+                  <div className="relative">
+                    <div className="size-20 bg-gradient-to-br dark:from-success/50 dark:to-success/40 from-success to-success/80 rounded-2xl flex items-center justify-center shadow-lg transform rotate-3 hover:rotate-0 transition-transform duration-300">
+                      <CheckCircle className="size-10 text-success-foreground" />
+                    </div>
+                    <div className="absolute -top-2 -right-2">
+                      <Sparkles className="size-6 dark:text-foreground text-primary animate-pulse" />
+                    </div>
+                    <div className="absolute -bottom-2 -left-2">
+                      <Sparkles className="size-6 dark:text-foreground text-primary animate-pulse" />
+                    </div>
+                  </div>
+                </div>
 
-            <div>
-              {currentStep < FORM_STEPS.length && (
-                <Button variant="default" onClick={handleNext}>
-                  {currentStep === FORM_STEPS.length - 1 ? "Voir le récapitulatif" : "Suivant"}
-                  {currentStep === FORM_STEPS.length - 1 ? <Eye /> : <ArrowRight />}
-                </Button>
-              )}
+                <div className="space-y-6">
+                  <div className="space-y-3">
+                    <h1 className="text-3xl font-semibold leading-tight tracking-tight">
+                      Campagne créée avec succès 🎉
+                    </h1>
+                    <div className="w-16 h-1 bg-gradient-to-r from-success/20 to-success/80 rounded-full mx-auto"></div>
+                  </div>
+
+                  <p className="text-muted-foreground leading-relaxed max-w-lg mx-auto">
+                    Votre campagne d'affiliation est maintenant configurée et sauvegardée dans votre compte.
+                  </p>
+                </div>
+
+                <div className="block font-semibold text-lg max-w-lg mx-auto">
+                  Next step : l'activation pour commencer à générer des revenus 💡
+                </div>
+
+                <div className="space-y-4 max-w-lg mx-auto">
+                  <div className="grid grid-cols-2 gap-4">
+                    <Button variant="outline" asChild className="h-10">
+                      <Link to="/campaigns">
+                        <Link2 />
+                        Voir mes campagnes
+                      </Link>
+                    </Button>
+
+                    <Button className="h-10" onClick={handleReset}>
+                      <Plus />
+                      Nouvelle campagne
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {currentStep < FORM_STEPS.length && (
+            <div className="flex justify-between">
+              <Button variant="outline" onClick={handlePrevious} disabled={currentStep === 1}>
+                <ArrowLeft />
+                Précédent
+              </Button>
+
+              <Button variant="default" onClick={handleNext}>
+                {currentStep === FORM_STEPS.length - 1 ? (
+                  <>
+                    <Eye /> Récapitulatif
+                  </>
+                ) : (
+                  <>
+                    Suivant
+                    <ArrowRight />
+                  </>
+                )}
+              </Button>
             </div>
-          </div>
+          )}
         </div>
       </Form>
     </div>

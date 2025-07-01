@@ -37,6 +37,13 @@ export class HttpClient {
     return HttpClient.instance;
   }
 
+  public getClient(): AxiosInstance {
+    if (!HttpClient.instance) {
+      HttpClient.instance = new HttpClient();
+    }
+    return HttpClient.instance.client;
+  }
+
   public async get<T>(url: string, config?: AxiosRequestConfig): Promise<BaseApiResponse<T>> {
     const response = await this.client.get<BaseApiResponse<T>>(url, config);
     return response.data;

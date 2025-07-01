@@ -15,3 +15,12 @@ export type Lead = {
   price: number;
   notes: string;
 };
+
+export interface LeadStats {
+  pending: number;
+  validated: number;
+  rejected: number;
+  contacted: number;
+  converted: number;
+  total: number;
+}

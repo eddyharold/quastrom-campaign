@@ -10,33 +10,30 @@ import { ActionsDropdown } from "@/presentation/components/data-table/actions-dr
 import { DataTable } from "@/presentation/components/data-table/table";
 import { ConfirmDialog } from "@/presentation/components/confirm-dialog";
 import { CampaignDetailsPanel } from "../../../../presentation/components/campaign-details-panel";
-import { useDeleteCampaignMutation } from "../../application/use-cases/delete-campaign";
+import { useDeleteCampaign } from "../../application/use-cases/delete-campaign-mutation";
 import { toast } from "sonner";
 
 type CampaignDataTableProps = {
   campaigns?: Campaign[];
+  total?: number;
   isLoading: boolean;
 };
 
-export const CampaignDataTable = ({ campaigns, isLoading }: CampaignDataTableProps) => {
+export const CampaignDataTable = ({ campaigns, isLoading, total }: CampaignDataTableProps) => {
   const viewDetails = useModal<Campaign>();
   const confirmDelete = useModal<Campaign>();
-  const { mutate: deleteCampaign, isPending: isLoadingDeleteCampaign } = useDeleteCampaignMutation();
+
+  const { mutate: deleteCampaign, isPending: isDeletingCampaign } = useDeleteCampaign();
 
   const handleDeleteCampaign = () => {
     if (!confirmDelete.data) return;
 
     deleteCampaign(confirmDelete.data.id.toString(), {
       onSuccess: () => {
-        toast.success(`La campagne ${confirmDelete.data?.name} a été supprimée avec succès.`, {
-          description: "L'opération a été effectuée avec succès.",
+        toast.success(`Suppression de la campagne`, {
+          description: "Campagne supprimée avec succès",
         });
         confirmDelete.close();
-      },
-      onError: (error) => {
-        toast.error("Erreur de suppression", {
-          description: `Une erreur est survenue lors de la suppression de la campagne: ${error.message}`,
-        });
       },
     });
   };
@@ -51,14 +48,16 @@ export const CampaignDataTable = ({ campaigns, isLoading }: CampaignDataTablePro
             <p className="font-medium truncate group-hover:underline group-hover:underline-offset-2 group-hover:text-primary group-hover:decoration-dashed">
               {row.original.name}
             </p>
-            <p className="text-sm text-muted-foreground">{row.original.conversion_rate}% taux de conversion</p>
+            <p className="text-sm text-muted-foreground">
+              {Number(row.original.conversion_rate).toFixed(2)}% taux de conversion
+            </p>
           </div>
         ),
       },
       {
         id: "objective",
         header: "Objective",
-        cell: ({ row: { original: data } }) => data.category,
+        cell: ({ row: { original: data } }) => data.objective.name,
       },
       {
         id: "budget",
@@ -68,7 +67,7 @@ export const CampaignDataTable = ({ campaigns, isLoading }: CampaignDataTablePro
             <p className="font-medium">
               {formatCurrency(row.original.spent)} / {formatCurrency(row.original.budget)}
             </p>
-            <div className="w-20 h-1.5 bg-gray-200 rounded-full">
+            <div className="w-20 h-1.5 bg-muted rounded-full">
               <div
                 className="h-1.5 bg-blue-500 rounded-full"
                 style={{ width: `${(Number(row.original.spent) / Number(row.original.budget)) * 100}%` }}
@@ -81,7 +80,7 @@ export const CampaignDataTable = ({ campaigns, isLoading }: CampaignDataTablePro
         id: "lead",
         header: "Leads",
         cell: ({ row }) => (
-          <div className="border border-dashed p-1.5 text-sm rounded w-fit">
+          <div className="border border-dashed p-1.5 text-xs rounded w-fit">
             {formatNumber(row.original.estimated_leads)}
           </div>
         ),
@@ -143,24 +142,23 @@ export const CampaignDataTable = ({ campaigns, isLoading }: CampaignDataTablePro
     <>
       <DataTable<Campaign>
         data={campaigns ?? []}
+        rowCount={total || 0}
         columns={columns}
         isLoading={isLoading}
         emptyMessage="Aucune campagne disponible"
       />
 
       <ConfirmDialog
-        isLoading={isLoadingDeleteCampaign}
+        isLoading={isDeletingCampaign}
         isOpen={confirmDelete.isOpen}
         onDismiss={confirmDelete.close}
         onAction={handleDeleteCampaign}
         messages={{
           title: "Supprimer la campagne ?",
-          description: confirmDelete.data ? 
-            `Voulez-vous vraiment supprimer la campagne "${confirmDelete.data.name}" ? Cette action est irréversible.` : 
-            "Voulez-vous vraiment supprimer cette campagne ?",
+          description: `Voulez-vous vraiment supprimer la campagne "${confirmDelete.data?.name}" ? Cette action est irréversible.`,
           buttons: {
-            cancel: "Annuler",
-            action: "Supprimer",
+            cancel: "Non, annuler",
+            action: "Oui, supprimer",
           },
         }}
       />

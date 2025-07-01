@@ -1,7 +1,7 @@
 import { createContext, FC, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { httpClient } from "@/infrastructure/api/http-client";
 import { User } from "@/domain/entities/user";
-import { useGetProfileQuery } from "@/application/use-cases/get-profile-query";
+import { useGetProfile } from "@/application/use-cases/get-profile-query";
 import { tokenManager } from "@/infrastructure/auth/token-manager";
 
 interface AuthContextType {
@@ -21,7 +21,7 @@ interface AuthProviderProps {
 export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const isLoggedIn = !!tokenManager.getToken();
-  const { data: currentUser, isLoading: isProfileLoading } = useGetProfileQuery(!user && isLoggedIn);
+  const { data: currentUser, isLoading: isProfileLoading } = useGetProfile(!user && isLoggedIn);
 
   const clearUser = useCallback(() => {
     setUser(null);

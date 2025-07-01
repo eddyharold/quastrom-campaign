@@ -2,7 +2,7 @@ import { AUTH_QUERY } from "@/domain/constants/query";
 import { getProfile } from "@/application/services/auth-service";
 import { useQuery } from "@tanstack/react-query";
 
-export const useGetProfileQuery = (retriveProfile = false) =>
+export const useGetProfile = (retriveProfile = false) =>
   useQuery({
     queryKey: AUTH_QUERY.getProfile,
     queryFn: getProfile,

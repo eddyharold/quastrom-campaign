@@ -1,5 +1,5 @@
 import { ColumnDef } from "@tanstack/react-table";
-import { Edit, Eye, Pause, Trash } from "lucide-react";
+import { Check, Eye, XCircle } from "lucide-react";
 import { useMemo } from "react";
 import { Lead } from "@/domain/entities/lead";
 import { useModal } from "@/presentation/hooks/use-modal";
@@ -8,34 +8,37 @@ import { formatDateFromPattern } from "@/domain/utils/date";
 import { ActionsDropdown } from "@/presentation/components/data-table/actions-dropdown";
 import { DataTable } from "@/presentation/components/data-table/table";
 import { ConfirmDialog } from "@/presentation/components/confirm-dialog";
-import { CampaignDetailsPanel } from "@/presentation/components/lead-details-panel";
+// import { CampaignDetailsPanel } from "@/presentation/components/lead-details-panel";
 import { Campaign } from "@/domain/entities/campaign";
 import { LeadStatusBadge } from "@/presentation/components/lead-status-badge";
-import { useDeleteLeadMutation } from "../../application/use-cases/delete-lead";
-import { toast } from "sonner";
+import { useUpdateLeadStatusBulk } from "../../application/use-cases/update-lead-status-bluk-mutation";
 
 type LeadDataTableProps = {
   leads?: Lead[];
+  total?: number;
   isLoading: boolean;
+  onSelectLeads?: (leads: Lead[]) => void;
 };
 
-export const LeadDataTable = ({ leads, isLoading }: LeadDataTableProps) => {
+export const LeadDataTable = ({ leads, isLoading, total, onSelectLeads }: LeadDataTableProps) => {
   const viewDetails = useModal<Lead>();
   const viewCampaignDetails = useModal<Campaign>();
-  const confirmDelete = useModal<Lead>();
-  const { mutate: deleteLead, isPending: isLoadingDeleteLead } = useDeleteLeadMutation();
+  const validateLead = useModal<Lead>();
+  const rejectLead = useModal<Lead>();
 
-  const handleDeleteLead = () => {
-    if (!confirmDelete.data) return;
-    
-    deleteLead(confirmDelete.data.id.toString(), {
-      onSuccess: () => {
-        toast.success(`Le lead ${confirmDelete.data!.name} a été supprimé avec succès`);
-        confirmDelete.close();
-      },
-      onError: (error) => {
-        toast.error(`Erreur lors de la suppréssion: ${error.message || 'Une erreur est survenue'}`);
-      },
+  const { mutateAsync: updateLeadStatusBulk, isPending: isUpdating } = useUpdateLeadStatusBulk();
+
+  const handleValidateLead = () => {
+    if (!validateLead.data) return;
+    updateLeadStatusBulk({ action: "accepted", selectedLeads: [validateLead.data] }).then(() => {
+      validateLead.close();
+    });
+  };
+
+  const handleRejectLead = () => {
+    if (!rejectLead.data) return;
+    updateLeadStatusBulk({ action: "rejected", selectedLeads: [rejectLead.data] }).then(() => {
+      rejectLead.close();
     });
   };
 
@@ -108,19 +111,14 @@ export const LeadDataTable = ({ leads, isLoading }: LeadDataTableProps) => {
                 onClick: () => viewDetails.open(data),
               },
               {
-                icon: Edit,
-                label: "Mettre à jour",
-                onClick: () => {},
+                icon: Check,
+                label: "Valider",
+                onClick: () => validateLead.open(data),
               },
               {
-                icon: Pause,
-                label: "Mettre en pause",
-                onClick: () => {},
-              },
-              {
-                icon: Trash,
-                label: "Supprimer",
-                onClick: () => confirmDelete.open(data),
+                icon: XCircle,
+                label: "Rejeter",
+                onClick: () => rejectLead.open(data),
               },
             ]}
           />
@@ -130,40 +128,55 @@ export const LeadDataTable = ({ leads, isLoading }: LeadDataTableProps) => {
         },
       },
     ],
-    [confirmDelete, viewDetails, viewCampaignDetails, deleteLead]
+    [viewDetails, viewCampaignDetails, validateLead, rejectLead]
   );
 
   return (
     <>
       <DataTable<Lead>
         data={leads ?? []}
+        rowCount={total}
         columns={columns}
         isLoading={isLoading}
         emptyMessage="Aucun lead disponible"
+        onRowSelectionChange={onSelectLeads}
       />
 
       <ConfirmDialog
-        isLoading={isLoadingDeleteLead}
-        isOpen={confirmDelete.isOpen}
-        onDismiss={confirmDelete.close}
-        onAction={handleDeleteLead}
+        isLoading={isUpdating}
+        isOpen={validateLead.isOpen}
+        onDismiss={validateLead.close}
+        onAction={handleValidateLead}
         messages={{
-          title: "Supprimer le lead ?",
-          description: confirmDelete.data ? 
-            `Voulez-vous vraiment supprimer le lead "${confirmDelete.data.name}" ? Cette action est irréversible.` : 
-            "Voulez-vous vraiment supprimer ce lead ?",
+          title: "Valider le lead",
+          description: `Voulez-vous vraiment valider le lead "${validateLead.data?.name}" ?`,
           buttons: {
-            cancel: "Annuler",
-            action: "Supprimer",
+            cancel: "Non, annuler",
+            action: "Oui, valider",
           },
         }}
       />
 
-      <CampaignDetailsPanel
+      <ConfirmDialog
+        isLoading={isUpdating}
+        isOpen={rejectLead.isOpen}
+        onDismiss={rejectLead.close}
+        onAction={handleRejectLead}
+        messages={{
+          title: "Rejeter le lead",
+          description: `Voulez-vous vraiment rejeter le lead "${rejectLead.data?.name}" ? Cette action est irréversible`,
+          buttons: {
+            cancel: "Non, annuler",
+            action: "Oui, rejeter",
+          },
+        }}
+      />
+
+      {/* <CampaignDetailsPanel
         campaign={viewCampaignDetails.data}
         isOpen={viewCampaignDetails.isOpen}
         onDismiss={viewCampaignDetails.close}
-      />
+      /> */}
     </>
   );
 };

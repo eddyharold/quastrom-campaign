@@ -1,6 +1,6 @@
 import { Transaction } from "@/domain/entities/transaction";
 import { Badge } from "./ui/badge";
-import { Check, Loader, XCircle } from "lucide-react";
+import { CheckCircle2, Loader, XCircle } from "lucide-react";
 import { useMemo } from "react";
 
 export const TransactionStatusBadge = ({
@@ -28,18 +28,18 @@ export const TransactionStatusBadge = ({
       case "failed":
         return <XCircle />;
       case "success":
-        return <Check />;
+        return <CheckCircle2 />;
     }
   }, [transaction]);
 
   const label = useMemo(() => {
     switch (transaction.status) {
       case "pending":
-        return "En cours";
+        return "Pending";
       case "failed":
-        return "Echoue";
+        return "Failed";
       case "success":
-        return "Effectuee";
+        return "Done";
     }
   }, [transaction]);
 

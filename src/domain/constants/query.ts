@@ -13,12 +13,35 @@ export const AUTH_QUERY = {
   getProfile: ["AUTH", "GET_PROFILE"],
 };
 
-export const PROMOTION_LINK_QUERY = {
-  default: ["PROMOTION_LINK"],
-  createPromotionLink: ["CREATE_PROMOTION_LINK"],
+export const COMMON_QUERY = {
+  getAllObjective: ["COMMON", "GET_OBJECTIVE"],
+  getAllCreative: ["COMMON", "GET_CREATIVE"],
 };
 
-export const PAYMENT_QUERY = {
-  default: ["PAYMENT"],
-  getAllPayment: ["GET_ALL_PAYMENT"],
+export const CAMPAIGN_QUERY = {
+  default: ["CAMPAIGN"],
+  getAll: ["CAMPAIGN", "GET_ALL"],
+  create: ["CAMPAIGN", "CREATE"],
+  update: (id: string) => ["CAMPAIGN", "UPDATE", id],
+  delete: (id: string) => ["CAMPAIGN", "DELETE", id],
+  getAllStats: ["CAMPAIGN", "GET_ALL_STATS"],
+};
+
+export const TRANSACTION_QUERY = {
+  default: ["TRANSACTION"],
+  getAll: ["TRANSACTION", "GET_ALL"],
+  getStats: ["TRANSACTION", "GET_STATS"],
+};
+
+export const WALLET_QUERY = {
+  default: ["WALLET"],
+  getDetails: ["WALLET", "GET_DETAILS"],
+  recharge: ["WALLET", "RECHARGE"],
+};
+
+export const LEAD_QUERY = {
+  default: ["LEAD"],
+  getAll: ["LEAD", "GET_ALL"],
+  getStats: ["LEAD", "GET_STATS"],
+  update: ["LEAD", "UPDATE"],
 };

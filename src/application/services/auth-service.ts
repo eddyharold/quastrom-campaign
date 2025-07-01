@@ -4,8 +4,8 @@ import { User } from "@/domain/entities/user";
 
 export const getProfile = async () => {
   try {
-    const rs = await httpClient.get<User>("/me");
-    return Promise.resolve(rs.data);
+    const rs = await httpClient.getClient().get<{ user: User }>("/me");
+    return Promise.resolve(rs.data.user);
   } catch (error) {
     return Promise.reject(refractHttpError(error));
   }

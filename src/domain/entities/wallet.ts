@@ -1,6 +1,3 @@
-/**
- * Wallet entity representing a user's wallet
- */
 export interface Wallet {
   id: number;
   user_id: number;

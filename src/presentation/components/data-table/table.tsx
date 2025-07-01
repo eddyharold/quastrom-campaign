@@ -2,7 +2,10 @@ import * as React from "react";
 import {
   ColumnDef,
   ColumnFiltersState,
+  PaginationState,
+  RowSelectionState,
   SortingState,
+  Updater,
   VisibilityState,
   flexRender,
   getCoreRowModel,
@@ -24,10 +27,10 @@ import { cn } from "@/domain/utils/common";
 
 type DataTableProps<T> = {
   data: T[];
+  rowCount?: number;
   columns: ColumnDef<T>[];
   isLoading?: boolean;
   emptyMessage?: string;
-  hideCheckbox?: boolean;
   classNames?: {
     table?: string;
     tableHeader?: string;
@@ -39,15 +42,23 @@ type DataTableProps<T> = {
     };
     tableCell?: string;
   };
+  autoPagination?: boolean;
+  rowSelectable?: boolean;
+  onRowSelectionChange?: (rows: T[]) => void;
+  onPaginationChange?: (pagination: PaginationState) => void;
 };
 
 export function DataTable<T>({
   data,
+  rowCount = 0,
   columns: initialColumns,
   isLoading = false,
   emptyMessage,
-  hideCheckbox = false,
   classNames,
+  autoPagination = false,
+  rowSelectable = true,
+  onRowSelectionChange,
+  onPaginationChange,
 }: DataTableProps<T>) {
   const [rowSelection, setRowSelection] = React.useState({});
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
@@ -60,7 +71,7 @@ export function DataTable<T>({
 
   const columns: ColumnDef<T>[] = React.useMemo(() => {
     return [
-      ...(hideCheckbox
+      ...(rowSelectable
         ? []
         : ([
             {
@@ -92,11 +103,45 @@ export function DataTable<T>({
           ] as ColumnDef<T>[])),
       ...initialColumns,
     ];
-  }, [initialColumns, hideCheckbox]);
+  }, [initialColumns, rowSelectable]);
+
+  const handleUpdatePagination = (updaterOrValue: Updater<PaginationState>) => {
+    let paginationUpdate: PaginationState;
+
+    if (typeof updaterOrValue === "function") {
+      paginationUpdate = updaterOrValue(pagination);
+    } else {
+      paginationUpdate = updaterOrValue;
+    }
+
+    onPaginationChange?.(paginationUpdate);
+    setPagination(paginationUpdate);
+  };
+
+  const handleRowSelection = (updaterOrValue: Updater<RowSelectionState>) => {
+    let rowSelectionUpdate: RowSelectionState;
+
+    if (typeof updaterOrValue === "function") {
+      rowSelectionUpdate = updaterOrValue(rowSelection);
+    } else {
+      rowSelectionUpdate = updaterOrValue;
+    }
+
+    setRowSelection(rowSelectionUpdate);
+    onRowSelectionChange?.(table.getSelectedRowModel().rows.map((row) => row.original));
+  };
 
   const table = useReactTable({
     data,
     columns,
+
+    rowCount,
+
+    manualPagination: !autoPagination,
+    manualFiltering: true,
+    manualSorting: true,
+    enableRowSelection: rowSelectable,
+
     state: {
       sorting,
       columnVisibility,
@@ -104,18 +149,20 @@ export function DataTable<T>({
       columnFilters,
       pagination,
     },
-    enableRowSelection: true,
-    onRowSelectionChange: setRowSelection,
+
+    onRowSelectionChange: rowSelectable ? handleRowSelection : undefined,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
-    onPaginationChange: setPagination,
+    onPaginationChange: autoPagination ? handleUpdatePagination : undefined,
+
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFacetedRowModel: getFacetedRowModel(),
     getFacetedUniqueValues: getFacetedUniqueValues(),
+
+    ...(autoPagination ? { getPaginationRowModel: getPaginationRowModel() } : {}),
   });
 
   return (

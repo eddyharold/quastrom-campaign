@@ -10,10 +10,12 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/presentation/components/ui/sidebar";
-import { MENU_GROUPS } from "@/presentation/layouts/contents/sidebar-links";
+import { MENU_GROUPS, MENU_GROUPS_2 } from "@/presentation/layouts/contents/sidebar-links";
 import { Link, useLocation } from "react-router";
 
 import logo from "@/assets/images/logo-full.png";
+import { Button } from "@/presentation/components/ui/button";
+import { Plus } from "lucide-react";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const location = useLocation();
@@ -40,6 +42,58 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
       <SidebarContent>
         {MENU_GROUPS.map((group) =>
+          !group.roles || group.roles?.length == 0 ? (
+            <SidebarGroup key={group.title}>
+              {group.title && (
+                <SidebarGroupLabel className="uppercase dark:text-muted-foreground/60 text-muted-foreground">
+                  {group.title}
+                </SidebarGroupLabel>
+              )}
+              <SidebarGroupContent className="px-2">
+                <SidebarMenu>
+                  {group.menus?.map(
+                    (menu) =>
+                      menu.url && (
+                        <SidebarMenuItem key={menu.title}>
+                          <SidebarMenuButton
+                            asChild
+                            data-active={isLinkActive(menu.url)}
+                            className="group/menu-button font-medium gap-3 h-9 rounded-md [&>svg]:size-auto"
+                          >
+                            <Link to={menu.url}>
+                              {menu.icon && (
+                                <menu.icon className="group-hover/menu-button:text-primary-foreground group-data-[active=true]/menu-button:text-primary-foreground !size-5" />
+                              )}
+                              <span>{menu.title}</span>
+                            </Link>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      )
+                  )}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          ) : null
+        )}
+
+        <SidebarGroup>
+          <SidebarGroupContent className="px-2">
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Button variant="secondary" asChild>
+                    <Link to="/campaigns/create">
+                      <Plus />
+                      Créer une campagne
+                    </Link>
+                  </Button>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {MENU_GROUPS_2.map((group) =>
           !group.roles || group.roles?.length == 0 ? (
             <SidebarGroup key={group.title}>
               {group.title && (

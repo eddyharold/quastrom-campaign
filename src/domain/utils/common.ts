@@ -43,3 +43,31 @@ export const generateUsername = (fullname: string): string => {
     return (initials + lastName).toLowerCase();
   }
 };
+
+export function collectRootVariables(): Record<string, string> {
+  const isDark =
+    document.documentElement.classList.contains("dark") || window.matchMedia("(prefers-color-scheme: dark)").matches;
+
+  const targetSelector = isDark ? ".dark" : ":root";
+  const vars: Record<string, string> = {};
+
+  for (const sheet of Array.from(document.styleSheets)) {
+    try {
+      for (const rule of Array.from(sheet.cssRules)) {
+        // match exactly the rule for the active mode
+        if (rule instanceof CSSStyleRule && rule.selectorText.trim() === targetSelector) {
+          for (const name of Array.from(rule.style)) {
+            if (name.startsWith("--")) {
+              // console.log(rule.style.cssText.split(";").map((s) => s.trim()));
+              vars[name] = rule.style.getPropertyValue(name).trim();
+            }
+          }
+        }
+      }
+    } catch {
+      // skip cross-origin sheets
+    }
+  }
+
+  return vars;
+}

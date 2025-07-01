@@ -33,7 +33,9 @@ export const MENU_GROUPS: SidebarMenuGroup[] = [
       },
     ],
   },
+];
 
+export const MENU_GROUPS_2: SidebarMenuGroup[] = [
   {
     title: "Configurations",
     menus: [

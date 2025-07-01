@@ -21,11 +21,11 @@ export const queryClient = new QueryClient({
       refetchOnMount: true,
       retryOnMount: true,
     },
-    mutations: {
-      retry: 1,
-      onError: (error: unknown) => {
-        console.error("Mutation error:", error);
-      },
-    },
+    // mutations: {
+    //   retry: 1,
+    //   onError: (error: unknown) => {
+    //     console.error("Mutation error:", error);
+    //   },
+    // },
   },
 });

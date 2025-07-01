@@ -1,4 +1,5 @@
-import { format } from "date-fns";
+import { format, formatDistance } from "date-fns";
+import { fr } from "date-fns/locale";
 
 export const formatDate = (input: string | Date | undefined | null, withTime = false): string => {
   if (!input) return "";
@@ -9,7 +10,7 @@ export const formatDate = (input: string | Date | undefined | null, withTime = f
 
   if (withTime) formatPattern = `${formatPattern} 'a' HH:mm`;
 
-  return format(date, formatPattern);
+  return format(date, formatPattern, { locale: fr });
 };
 
 export const formatDateStandard = (input: string | Date, locale = "fr-FR", withTime = false): string => {
@@ -39,5 +40,11 @@ export const formatDateFromPattern = (
   const date = new Date(input);
   if (isNaN(date.getTime())) return "";
 
-  return format(date, pattern);
+  return format(date, pattern, { locale: fr });
+};
+
+export const formatIntervalDateToHuman = (startDate?: Date, endDate?: Date): string => {
+  if (!startDate || !endDate) return "";
+
+  return formatDistance(startDate, endDate, { locale: fr });
 };
