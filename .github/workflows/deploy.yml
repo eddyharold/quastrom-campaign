@@ -1,0 +1,35 @@
+name: Deploy Quastrom Annonceur Application
+description: Deploys the Quastrom Annonceur application to the server using SSH.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up SSH Agent
+        uses: webfactory/ssh-agent@v0.8.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Set up SSH config
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H $SSH_HOST >> ~/.ssh/known_hosts
+
+      - name: Deploy application
+        env:
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+          GIT_REPO_URL: ${{ secrets.GIT_REPO_URL }}
+        run: |
+          ssh $SSH_USER@$SSH_HOST "bash -s" < ./.scripts/deploy.sh $DEPLOY_PATH $GIT_REPO_URL

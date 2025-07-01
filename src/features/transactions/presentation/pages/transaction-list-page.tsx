@@ -11,11 +11,7 @@ import { WalletBalanceCard } from "../../components/wallet-balance-card";
 import { Button } from "@/presentation/components/ui/button";
 import { cn } from "@/domain/utils/common";
 import { Skeleton } from "@/presentation/components/ui/skeleton";
-import { loadStripe } from "@stripe/stripe-js";
-import { Elements } from "@stripe/react-stripe-js";
-import { STRIPE_SECRET_KEY } from "@/domain/constants/stripe";
-
-const stripePromise = loadStripe(STRIPE_SECRET_KEY);
+import { StripeElement } from "@/presentation/components/stripe-element";
 
 export default function TransactionListPage() {
   const { updateBreadcrumb } = useLayoutContext();
@@ -52,9 +48,9 @@ export default function TransactionListPage() {
 
   return (
     <div className="space-y-6">
-      <Elements stripe={stripePromise}>
+      <StripeElement>
         <WalletBalanceCard />
-      </Elements>
+      </StripeElement>
 
       <div className="grid w-full gap-4 md:grid-cols-3">
         {!isLoadingStats ? (

@@ -22,6 +22,7 @@ import { Link } from "react-router";
 import { RECENT_CAMPAIGNS } from "@/domain/data/campaign";
 import { SystemAlert } from "../components/notification-pannel";
 import { WalletBalanceCard } from "@/features/transactions/components/wallet-balance-card";
+import { StripeElement } from "@/presentation/components/stripe-element";
 
 // import { DashboardSkeleton } from "../components/dashboard-skeleton";
 
@@ -148,8 +149,9 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      <WalletBalanceCard />
-     
+      <StripeElement>
+        <WalletBalanceCard />
+      </StripeElement>
 
       <div className="space-y-3">
         <div className="flex items-center justify-between">
