@@ -1132,12 +1132,12 @@ export default function CreateCampaign() {
                     <div className="space-y-6">
                       <div className="space-y-1">
                         <p className="text-xs text-muted-foreground">Campagne</p>
-                        <p className="font-medium">{form.getValues("name") || "Non défini"}</p>
+                        <p className="font-medium text-sm">{form.getValues("name") || "Non défini"}</p>
                       </div>
 
                       <div className="space-y-1">
                         <p className="text-xs text-muted-foreground">Période</p>
-                        <p className="font-medium">
+                        <p className="font-medium text-sm">
                           {form.getValues("start_date") &&
                           formatDateFromPattern(form.getValues("start_date"), "dd/MM/yyyy")
                             ? `${formatDateFromPattern(
@@ -1150,12 +1150,12 @@ export default function CreateCampaign() {
 
                       <div className="space-y-1">
                         <p className="text-xs text-muted-foreground">Objectif</p>
-                        <p className="font-medium">{objective?.name || "Non défini"}</p>
+                        <p className="font-medium text-sm">{objective?.name || "Non défini"}</p>
                       </div>
 
                       <div className="space-y-1">
-                        <p className="text-sm text-muted-foreground">Budget</p>
-                        <p className="font-medium">
+                        <p className="text-xs text-muted-foreground">Budget</p>
+                        <p className="font-medium text-sm">
                           {form.getValues("budget") ? formatCurrency(form.getValues("budget")) : "Non défini"}
                         </p>
                       </div>
@@ -1165,16 +1165,13 @@ export default function CreateCampaign() {
 
                 <Card>
                   <CardHeader className="border-b border-dashed">
-                    <CardTitle className="flex items-center justify-between">
-                      <span>Éléments créatifs</span>
-                      <span>{formatCurrency(creativeCost)}</span>
-                    </CardTitle>
+                    <CardTitle>Éléments créatifs</CardTitle>
                   </CardHeader>
 
                   <CardContent className="space-y-6">
                     <div className="flex items-center justify-between gap-4 w-full">
                       <span>Annonce</span>
-                      <span className="text-success bg-success/10 text-sm border border-success/10 border-dashed px-2 py-1 rounded">
+                      <span className="text-success bg-success/10 text-xs border border-success/10 border-dashed px-2 py-1 rounded">
                         Offert
                       </span>
                     </div>
@@ -1186,14 +1183,14 @@ export default function CreateCampaign() {
                           className="flex items-center justify-between gap-4 w-full"
                         >
                           <span>{support.name}</span>
-                          <span className="text-muted-foreground bg-accent/50 text-sm border border-dashed px-2 py-1 rounded">
+                          <span className="text-muted-foreground bg-accent/50 text-xs border border-dashed px-2 py-1 rounded">
                             {formatCurrency(support.price)}
                           </span>
                         </div>
                       );
                     })}
                   </CardContent>
-                  <CardFooter className="border-t border-dashed flex items-center justify-between text-lg font-semibold">
+                  <CardFooter className="border-t border-dashed flex items-center justify-between text-base font-semibold">
                     <span>Montant total</span>
                     <span>{formatCurrency(creativeCost)}</span>
                   </CardFooter>
@@ -1214,12 +1211,12 @@ export default function CreateCampaign() {
                   </div>
 
                   <div className="space-y-3 mb-6">
-                    <div className="flex justify-between text-sm text-muted-foreground">
+                    <div className="flex justify-between text-sm text-muted-foreground font-medium">
                       <p>Budget de la campagne</p>
                       <p>{formatCurrency(form.getValues("budget") || 0)}</p>
                     </div>
 
-                    <div className="flex justify-between text-sm text-muted-foreground">
+                    <div className="flex justify-between text-sm text-muted-foreground font-medium">
                       <p>Éléments créatifs</p>
                       <p>{formatCurrency(creativeCost)}</p>
                     </div>
@@ -1229,7 +1226,7 @@ export default function CreateCampaign() {
                       <p>{formatCurrency(paymentAmount)}</p>
                     </div>
 
-                    <div className="flex justify-between text-warning/80 font-medium">
+                    <div className="flex justify-between text-sm text-warning/80 font-medium">
                       <p>À débiter maintenant</p>
                       <p>{formatCurrency(creativeCost)}</p>
                     </div>
