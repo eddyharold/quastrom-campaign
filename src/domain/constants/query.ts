@@ -18,10 +18,16 @@ export const COMMON_QUERY = {
   getAllCreative: ["COMMON", "GET_CREATIVE"],
 };
 
+export const DASHBOARD_QUERY = {
+  default: ["DASHBOARD"],
+  getAllStats: ["DASHBOARD", "GET_STATS"],
+};
+
 export const CAMPAIGN_QUERY = {
   default: ["CAMPAIGN"],
   getAll: ["CAMPAIGN", "GET_ALL"],
   create: ["CAMPAIGN", "CREATE"],
+  getById: (id: string) => ["CAMPAIGN", "GET_BY_ID", id],
   update: (id: string) => ["CAMPAIGN", "UPDATE", id],
   delete: (id: string) => ["CAMPAIGN", "DELETE", id],
   getAllStats: ["CAMPAIGN", "GET_ALL_STATS"],
@@ -44,4 +50,10 @@ export const LEAD_QUERY = {
   getAll: ["LEAD", "GET_ALL"],
   getStats: ["LEAD", "GET_STATS"],
   update: ["LEAD", "UPDATE"],
+};
+
+export const NOTIFICATION_QUERY = {
+  default: ["NOTIFICATION"],
+  getAll: ["NOTIFICATION", "GET_ALL"],
+  getRecent: ["NOTIFICATION", "GET_RECENT"],
 };

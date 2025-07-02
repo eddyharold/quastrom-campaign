@@ -9,13 +9,14 @@ import { Matcher } from "react-day-picker";
 
 interface DatePickerProps {
   value?: Date;
+  defaultValue?: Date;
   onChange?: (value?: Date) => void;
   placeholder?: string;
   disabledUntil?: Date;
 }
 
-export function DatePicker({ value, onChange, placeholder, disabledUntil }: DatePickerProps) {
-  const [date, setDate] = React.useState<Date | undefined>(value);
+export function DatePicker({ value, defaultValue, onChange, placeholder, disabledUntil }: DatePickerProps) {
+  const [date, setDate] = React.useState<Date | undefined>(value || defaultValue);
 
   const handleChangeDate = (date?: Date) => {
     setDate(date);

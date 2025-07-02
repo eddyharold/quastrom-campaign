@@ -10,3 +10,12 @@ export const getWalletBalance = async () => {
     return Promise.reject(refractHttpError(error));
   }
 };
+
+export const rechargeWallet = async (amount: number) => {
+  try {
+    const response = await httpClient.post<{ clientSecret: string }>("/wallets/recharge", { amount });
+    return response.data?.clientSecret;
+  } catch (error) {
+    return Promise.reject(refractHttpError(error));
+  }
+};

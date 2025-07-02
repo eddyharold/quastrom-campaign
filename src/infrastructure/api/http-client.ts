@@ -59,6 +59,11 @@ export class HttpClient {
     return response.data;
   }
 
+  public async patch<T>(url: string, data?: RequestBody, config?: AxiosRequestConfig): Promise<BaseApiResponse<T>> {
+    const response = await this.client.patch<BaseApiResponse<T>>(url, data, config);
+    return response.data;
+  }
+
   public async delete<T>(url: string, config?: AxiosRequestConfig): Promise<BaseApiResponse<T>> {
     const response = await this.client.delete<BaseApiResponse<T>>(url, config);
     return response.data;

@@ -7,7 +7,7 @@ import { PageHeader } from "@/presentation/components/page-header";
 import { TransactionDataTable } from "../../components/transaction-list-data-table";
 import { useGetTransactionList } from "../../application/use-cases/get-all-transaction-query";
 import { useGetTransactionStats } from "../../application/use-cases/get-transaction-stats-query";
-import { WalletBalanceCard } from "../../components/wallet-balance-card";
+import { WalletBalanceCard } from "../../../../presentation/components/wallet-balance-card";
 import { Button } from "@/presentation/components/ui/button";
 import { cn } from "@/domain/utils/common";
 import { Skeleton } from "@/presentation/components/ui/skeleton";

@@ -1,5 +1,5 @@
 import { Badge } from "./ui/badge";
-import { Check, Edit, Pause, Play } from "lucide-react";
+import { Loader2, Pause, Play, StopCircle } from "lucide-react";
 import { useMemo } from "react";
 import { Campaign } from "@/domain/entities/campaign";
 
@@ -7,11 +7,11 @@ export const CampaignStatusBadge = ({ campaign, className }: { campaign: Campaig
   const variant = useMemo(() => {
     switch (campaign.status) {
       case "active":
-        return "fade-success";
+        return "success";
       case "paused":
         return "warning";
       case "ended":
-        return "success";
+        return "fade-success";
       case "draft":
         return "accent";
     }
@@ -24,9 +24,9 @@ export const CampaignStatusBadge = ({ campaign, className }: { campaign: Campaig
       case "paused":
         return <Pause />;
       case "ended":
-        return <Check />;
+        return <StopCircle />;
       case "draft":
-        return <Edit />;
+        return <Loader2 />;
     }
   }, [campaign]);
 
@@ -37,9 +37,9 @@ export const CampaignStatusBadge = ({ campaign, className }: { campaign: Campaig
       case "paused":
         return "Pause";
       case "ended":
-        return "Terminé";
+        return "Clôturé";
       case "draft":
-        return "Brouillon";
+        return "Stand By";
     }
   }, [campaign]);
 

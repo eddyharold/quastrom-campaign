@@ -10,19 +10,24 @@ import { useGetLeadStats } from "../../application/use-cases/get-lead-stats-quer
 import { Button } from "@/presentation/components/ui/button";
 import { cn } from "@/domain/utils/common";
 import { Skeleton } from "@/presentation/components/ui/skeleton";
-import { Lead } from "@/domain/entities/lead";
 import { useModal } from "@/presentation/hooks/use-modal";
 import { ConfirmDialog } from "@/presentation/components/confirm-dialog";
 import { useState } from "react";
 import { useUpdateLeadStatusBulk } from "../../application/use-cases/update-lead-status-bluk-mutation";
+import { AcquireLead } from "@/domain/entities/lead";
 
 export default function LeadListPage() {
   const { updateBreadcrumb } = useLayoutContext();
 
-  const [selectedLeads, setSelectedLeads] = useState<Lead[]>([]);
+  const [selectedLeads, setSelectedLeads] = useState<AcquireLead[]>([]);
 
   const bulkValidation = useModal();
   const bulkRejection = useModal();
+
+  const handleRowSelectionChange = (rows: AcquireLead[]) => {
+    console.log(rows);
+    setSelectedLeads(rows);
+  };
 
   const {
     data: leads,
@@ -45,17 +50,21 @@ export default function LeadListPage() {
   };
 
   const handleUpdateLeadStatusBulk = () => {
-    updateLeadStatusBulk({ action: "accepted", selectedLeads }).then(() => {
-      setSelectedLeads([]);
-      bulkValidation.close();
-    });
+    updateLeadStatusBulk({ action: "accepted", selectedLeads: selectedLeads.map((lead) => lead.id.toString()) }).then(
+      () => {
+        setSelectedLeads([]);
+        bulkValidation.close();
+      }
+    );
   };
 
   const handleUpdateLeadStatusBulkRejection = () => {
-    updateLeadStatusBulk({ action: "rejected", selectedLeads }).then(() => {
-      setSelectedLeads([]);
-      bulkRejection.close();
-    });
+    updateLeadStatusBulk({ action: "rejected", selectedLeads: selectedLeads.map((lead) => lead.id.toString()) }).then(
+      () => {
+        setSelectedLeads([]);
+        bulkRejection.close();
+      }
+    );
   };
 
   useEffect(() => {
@@ -108,7 +117,7 @@ export default function LeadListPage() {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold tracking-tight">{formatNumber(leadStats?.converted || 0)}</div>
+                <div className="text-3xl font-bold tracking-tight">{formatNumber(leadStats?.accepted || 0)}</div>
               </CardContent>
             </Card>
 
@@ -130,10 +139,17 @@ export default function LeadListPage() {
       </div>
 
       <PageHeader title="Leads" subtitle="Examiner et valider vos prospects de campagne" hideBackButton>
-        <Button disabled={selectedLeads.length === 0} onClick={bulkValidation.open}>
+        <Button
+          disabled={selectedLeads.filter((lead) => lead.status === "pending").length === 0}
+          onClick={bulkValidation.open}
+        >
           <CheckCircle2 /> Valider
         </Button>
-        <Button variant="destructive" disabled={selectedLeads.length === 0} onClick={bulkRejection.open}>
+        <Button
+          variant="destructive"
+          disabled={selectedLeads.filter((lead) => lead.status === "pending").length === 0}
+          onClick={bulkRejection.open}
+        >
           <XCircle /> Rejeter
         </Button>
 
@@ -148,7 +164,7 @@ export default function LeadListPage() {
       </PageHeader>
 
       <LeadDataTable
-        onSelectLeads={setSelectedLeads}
+        onRowSelectionChange={handleRowSelectionChange}
         total={leads?.pagination?.total}
         leads={leads?.data || []}
         isLoading={isLoadingLeads}

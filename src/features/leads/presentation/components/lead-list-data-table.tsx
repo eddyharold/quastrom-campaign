@@ -1,61 +1,75 @@
 import { ColumnDef } from "@tanstack/react-table";
-import { Check, Eye, XCircle } from "lucide-react";
+import { CheckCircle2, Eye, XCircle } from "lucide-react";
 import { useMemo } from "react";
-import { Lead } from "@/domain/entities/lead";
+import { AcquireLead } from "@/domain/entities/lead";
 import { useModal } from "@/presentation/hooks/use-modal";
-import { formatCurrency } from "@/domain/utils/currency";
 import { formatDateFromPattern } from "@/domain/utils/date";
 import { ActionsDropdown } from "@/presentation/components/data-table/actions-dropdown";
 import { DataTable } from "@/presentation/components/data-table/table";
 import { ConfirmDialog } from "@/presentation/components/confirm-dialog";
-// import { CampaignDetailsPanel } from "@/presentation/components/lead-details-panel";
-import { Campaign } from "@/domain/entities/campaign";
 import { LeadStatusBadge } from "@/presentation/components/lead-status-badge";
 import { useUpdateLeadStatusBulk } from "../../application/use-cases/update-lead-status-bluk-mutation";
+import { buildFullName } from "@/domain/utils/common";
+import { LeadDetailsPanel } from "@/presentation/components/lead-details-panel";
+// import { CampaignDetailsPanel } from "@/presentation/components/campaign-details-panel";
 
 type LeadDataTableProps = {
-  leads?: Lead[];
+  leads?: AcquireLead[];
   total?: number;
   isLoading: boolean;
-  onSelectLeads?: (leads: Lead[]) => void;
+  onRowSelectionChange?: (leads: AcquireLead[]) => void;
 };
 
-export const LeadDataTable = ({ leads, isLoading, total, onSelectLeads }: LeadDataTableProps) => {
-  const viewDetails = useModal<Lead>();
-  const viewCampaignDetails = useModal<Campaign>();
-  const validateLead = useModal<Lead>();
-  const rejectLead = useModal<Lead>();
+export const LeadDataTable = ({ leads, isLoading, total, onRowSelectionChange }: LeadDataTableProps) => {
+  const viewDetails = useModal<AcquireLead>();
+  const validateLead = useModal<AcquireLead>();
+  const rejectLead = useModal<AcquireLead>();
 
   const { mutateAsync: updateLeadStatusBulk, isPending: isUpdating } = useUpdateLeadStatusBulk();
 
   const handleValidateLead = () => {
     if (!validateLead.data) return;
-    updateLeadStatusBulk({ action: "accepted", selectedLeads: [validateLead.data] }).then(() => {
+    updateLeadStatusBulk({ action: "accepted", selectedLeads: [validateLead.data.id.toString()] }).then(() => {
       validateLead.close();
     });
   };
 
   const handleRejectLead = () => {
     if (!rejectLead.data) return;
-    updateLeadStatusBulk({ action: "rejected", selectedLeads: [rejectLead.data] }).then(() => {
+    updateLeadStatusBulk({ action: "rejected", selectedLeads: [rejectLead.data.id.toString()] }).then(() => {
       rejectLead.close();
     });
   };
 
-  const columns: ColumnDef<Lead>[] = useMemo(
+  const columns: ColumnDef<AcquireLead>[] = useMemo(
     () => [
       {
         id: "lead",
         header: "Lead",
         cell: ({ row }) => (
-          <div className="group space-y-1 cursor-pointer" onClick={() => viewDetails.open(row.original)}>
-            <p className="font-medium truncate group-hover:underline group-hover:underline-offset-2 group-hover:text-primary group-hover:decoration-dashed">
-              {row.original.name}
+          <div
+            onClick={() => viewDetails.open(row.original)}
+            className="font-medium cursor-pointer truncate hover:underline hover:underline-offset-2 hover:text-primary hover:decoration-dashed"
+          >
+            {row.original.code}
+          </div>
+        ),
+        meta: {
+          className: "w-[12%]",
+        },
+      },
+      {
+        id: "contact",
+        header: "Contact",
+        cell: ({ row }) => (
+          <div className="space-y-1">
+            <p className="font-medium truncate">
+              {buildFullName(row.original.lead.firstname, row.original.lead.lastname, "-")}
             </p>
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <span>{row.original.email}</span>
-              <span>.</span>
-              <span>{row.original.company}</span>
+              {row.original.lead.email && <span>{row.original.lead.email}</span>}
+              {row.original.lead.phone && <span>.</span>}
+              {row.original.lead.phone && <span>{row.original.lead.phone}</span>}
             </div>
           </div>
         ),
@@ -63,26 +77,16 @@ export const LeadDataTable = ({ leads, isLoading, total, onSelectLeads }: LeadDa
       {
         id: "campaign",
         header: "Campagne",
-        cell: ({ row }) => (
-          <div
-            className="group space-y-1 cursor-pointer"
-            onClick={() => viewCampaignDetails.open(row.original.campaign)}
-          >
-            <p className="font-medium truncate group-hover:underline group-hover:underline-offset-2 group-hover:text-primary group-hover:decoration-dashed">
-              {row.original.campaign.name}
-            </p>
-            <p className="text-xs text-muted-foreground">{row.original.campaign.name}</p>
-          </div>
-        ),
+        cell: ({ row }) => row.original.campaign.name,
       },
-      {
-        id: "price",
-        header: "Prix",
-        cell: ({ row: { original: data } }) => formatCurrency(data.price),
-        meta: {
-          className: "w-[10%]",
-        },
-      },
+      // {
+      //   id: "price",
+      //   header: "Prix",
+      //   cell: ({ row: { original: data } }) => formatCurrency(data.lead.price),
+      //   meta: {
+      //     className: "w-[10%]",
+      //   },
+      // },
       {
         id: "status",
         header: "Statut",
@@ -94,7 +98,7 @@ export const LeadDataTable = ({ leads, isLoading, total, onSelectLeads }: LeadDa
       {
         id: "date",
         header: "Date de création",
-        cell: ({ row: { original: data } }) => formatDateFromPattern(data.receivedAt, "dd/MM/yyyy - HH:mm:ss"),
+        cell: ({ row: { original: data } }) => formatDateFromPattern(data.created_at, "dd/MM/yyyy - HH:mm:ss"),
         meta: {
           className: "w-[12%]",
         },
@@ -110,16 +114,20 @@ export const LeadDataTable = ({ leads, isLoading, total, onSelectLeads }: LeadDa
                 label: "Voir details",
                 onClick: () => viewDetails.open(data),
               },
-              {
-                icon: Check,
-                label: "Valider",
-                onClick: () => validateLead.open(data),
-              },
-              {
-                icon: XCircle,
-                label: "Rejeter",
-                onClick: () => rejectLead.open(data),
-              },
+              ...(data.status === "pending"
+                ? [
+                    {
+                      icon: CheckCircle2,
+                      label: "Valider",
+                      onClick: () => validateLead.open(data),
+                    },
+                    {
+                      icon: XCircle,
+                      label: "Rejeter",
+                      onClick: () => rejectLead.open(data),
+                    },
+                  ]
+                : []),
             ]}
           />
         ),
@@ -128,18 +136,19 @@ export const LeadDataTable = ({ leads, isLoading, total, onSelectLeads }: LeadDa
         },
       },
     ],
-    [viewDetails, viewCampaignDetails, validateLead, rejectLead]
+    [viewDetails, validateLead, rejectLead]
   );
 
   return (
     <>
-      <DataTable<Lead>
+      <DataTable<AcquireLead>
         data={leads ?? []}
         rowCount={total}
         columns={columns}
         isLoading={isLoading}
         emptyMessage="Aucun lead disponible"
-        onRowSelectionChange={onSelectLeads}
+        onRowSelectionChange={onRowSelectionChange}
+        selectionCondition={(row) => row.status === "pending"}
       />
 
       <ConfirmDialog
@@ -149,7 +158,7 @@ export const LeadDataTable = ({ leads, isLoading, total, onSelectLeads }: LeadDa
         onAction={handleValidateLead}
         messages={{
           title: "Valider le lead",
-          description: `Voulez-vous vraiment valider le lead "${validateLead.data?.name}" ?`,
+          description: `Voulez-vous vraiment valider le lead "${validateLead.data?.code}" ?`,
           buttons: {
             cancel: "Non, annuler",
             action: "Oui, valider",
@@ -164,7 +173,7 @@ export const LeadDataTable = ({ leads, isLoading, total, onSelectLeads }: LeadDa
         onAction={handleRejectLead}
         messages={{
           title: "Rejeter le lead",
-          description: `Voulez-vous vraiment rejeter le lead "${rejectLead.data?.name}" ? Cette action est irréversible`,
+          description: `Voulez-vous vraiment rejeter le lead "${rejectLead.data?.code}" ? Cette action est irréversible`,
           buttons: {
             cancel: "Non, annuler",
             action: "Oui, rejeter",
@@ -172,11 +181,7 @@ export const LeadDataTable = ({ leads, isLoading, total, onSelectLeads }: LeadDa
         }}
       />
 
-      {/* <CampaignDetailsPanel
-        campaign={viewCampaignDetails.data}
-        isOpen={viewCampaignDetails.isOpen}
-        onDismiss={viewCampaignDetails.close}
-      /> */}
+      <LeadDetailsPanel lead={viewDetails.data} isOpen={viewDetails.isOpen} onDismiss={viewDetails.close} />
     </>
   );
 };

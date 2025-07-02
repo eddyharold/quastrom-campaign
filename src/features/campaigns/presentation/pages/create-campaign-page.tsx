@@ -30,6 +30,7 @@ import {
   Sparkles,
   Link2,
   Plus,
+  CheckCircle2,
 } from "lucide-react";
 import { cn } from "@/domain/utils/common";
 import { useLayoutContext } from "@/presentation/providers/layout-provider";
@@ -102,15 +103,16 @@ const FORM_STEPS = [
   },
 ];
 
-const BTP_CATEGORIES = [
-  "Bâtiment et Travaux Publics (BTP)",
-  "Énergies et Environnement",
-  "Immobilier et Aménagement",
-  "Assurance et Gestion des Risques",
-  "Banque et Services Financiers",
-  "Industrie Automobile et Mobilité",
-  "Autres Secteurs d’Activité",
-];
+const BTP_CATEGORIES = ["BTP", "Energies", "Immobilier", "Assurances", "Finances", "Automobile", "Autre"];
+// const BTP_CATEGORIES = [
+//   "Bâtiment et Travaux Publics (BTP)",
+//   "Énergies et Environnement",
+//   "Immobilier et Aménagement",
+//   "Assurance et Gestion des Risques",
+//   "Banque et Services Financiers",
+//   "Industrie Automobile et Mobilité",
+//   "Autres Secteurs d’Activité",
+// ];
 
 const stripePromise = loadStripe(STRIPE_SECRET_KEY);
 
@@ -247,6 +249,7 @@ export default function CreateCampaign() {
     form.setValue("commission_model", "");
     form.setValue("commission_value", "");
     form.setValue("budget", "");
+    form.setValue("estimated_leads", "");
     form.setValue("validation_condition_selected", []);
   };
 
@@ -279,6 +282,8 @@ export default function CreateCampaign() {
   const budget = Number(form.watch("budget") || 0);
   const walletBalance = Number(wallet?.balance || 0);
 
+  const estimatedLeads = Number(form.watch("estimated_leads") || 0);
+
   const objective = useMemo(() => {
     return objectives?.find((obj) => obj.id.toString() === selectedObjective);
   }, [selectedObjective, objectives]);
@@ -296,6 +301,22 @@ export default function CreateCampaign() {
     if (walletBalance >= totalCost) return 0;
     return totalCost - walletBalance;
   }, [budget, creativeCost, walletBalance]);
+
+  const handleBudgetChange = (value: string) => {
+    const budgetValue = Number(value);
+
+    if (isNaN(budgetValue)) return;
+
+    form.setValue("budget", value);
+
+    if (!objective) return;
+    const costPerLead = Number(objective.price_lead);
+
+    if (!isNaN(costPerLead) && costPerLead > 0) {
+      const estimatedLeads = Math.round(budgetValue / costPerLead);
+      form.setValue("estimated_leads", estimatedLeads.toString());
+    }
+  };
 
   const renderStepIndicator = () => (
     <div className="flex items-center justify-between mt-2">
@@ -733,13 +754,27 @@ export default function CreateCampaign() {
                       <FormLabel className="text-lg font-semibold">Budget total</FormLabel>
                       <FormControl>
                         <div className="relative">
-                          <Input placeholder="Ex: 1000" {...field} />
+                          <Input
+                            placeholder="Ex: 1000"
+                            {...field}
+                            onChange={(e) => handleBudgetChange(e.target.value)}
+                          />
                           <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
                             <span className="text-muted-foreground">€</span>
                           </div>
                         </div>
                       </FormControl>
                       <FormMessage />
+
+                      {budget > 0 && (
+                        <div className="flex items-center gap-2 mt-4 text-muted-foreground">
+                          <Info className="size-4 shrink-0" /> Avec un budget de{" "}
+                          <span className="font-semibold text-primary">{formatCurrency(budget)}</span> et prix par lead
+                          de <span className="font-semibold text-primary">{formatCurrency(objective?.price_lead)}</span>
+                          , vous aurez environ <span className="font-semibold text-primary">{estimatedLeads}</span>{" "}
+                          leads.
+                        </div>
+                      )}
                     </FormItem>
                   )}
                 />
@@ -747,7 +782,7 @@ export default function CreateCampaign() {
                 {objective &&
                   (!objective?.validation_conditions || objective?.validation_conditions.length === 0 ? (
                     <div className="flex items-center space-x-2 h-12 p-4 bg-success/10 rounded-lg">
-                      <CheckCircle className="h-5 w-5 text-success" />
+                      <CheckCircle2 className="h-5 w-5 text-success" />
                       <span className="text-sm">
                         Le lead doit avoir rempli le formulaire avec un nom et un numéro de téléphone valides.
                       </span>

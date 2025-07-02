@@ -22,8 +22,11 @@ export type Campaign = {
   campaign_selected_creatives: string[];
   validation_condition_selected: string[];
   objective: Objective;
+  campaign_objective_id: string;
   created_at: string;
   updated_at: string;
+  total_leads: number;
+  converted_leads: number;
 };
 
 export type CampaignStats = {

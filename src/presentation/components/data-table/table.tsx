@@ -16,7 +16,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { ChevronLeftIcon, ChevronRightIcon, ChevronsLeftIcon, ChevronsRightIcon } from "lucide-react";
+import { ChevronLeftIcon, ChevronRightIcon, ChevronsLeftIcon, ChevronsRightIcon, InboxIcon } from "lucide-react";
 import { Button } from "@/presentation/components/ui/button";
 import { Checkbox } from "@/presentation/components/ui/checkbox";
 import { Label } from "@/presentation/components/ui/label";
@@ -45,6 +45,7 @@ type DataTableProps<T> = {
   autoPagination?: boolean;
   rowSelectable?: boolean;
   onRowSelectionChange?: (rows: T[]) => void;
+  selectionCondition?: (row: T) => boolean;
   onPaginationChange?: (pagination: PaginationState) => void;
 };
 
@@ -56,8 +57,9 @@ export function DataTable<T>({
   emptyMessage,
   classNames,
   autoPagination = false,
-  rowSelectable = true,
+  rowSelectable = false,
   onRowSelectionChange,
+  selectionCondition,
   onPaginationChange,
 }: DataTableProps<T>) {
   const [rowSelection, setRowSelection] = React.useState({});
@@ -72,15 +74,14 @@ export function DataTable<T>({
   const columns: ColumnDef<T>[] = React.useMemo(() => {
     return [
       ...(rowSelectable
-        ? []
-        : ([
+        ? ([
             {
               id: "select",
               header: ({ table }) => (
                 <div className="flex items-center">
                   <Checkbox
-                    checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && "indeterminate")}
-                    onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+                    checked={table.getIsAllRowsSelected() || (table.getIsSomeRowsSelected() && "indeterminate")}
+                    onCheckedChange={(value) => table.toggleAllRowsSelected(!!value)}
                     aria-label="Sélectionner tout"
                   />
                 </div>
@@ -89,8 +90,13 @@ export function DataTable<T>({
                 <div className="flex items-center">
                   <Checkbox
                     checked={row.getIsSelected()}
-                    onCheckedChange={(value) => row.toggleSelected(!!value)}
+                    onCheckedChange={(value) =>
+                      selectionCondition
+                        ? selectionCondition(row.original) && row.toggleSelected(!!value)
+                        : row.toggleSelected(!!value)
+                    }
                     aria-label="Sélectionner la ligne"
+                    disabled={selectionCondition ? !selectionCondition(row.original) : false}
                   />
                 </div>
               ),
@@ -100,10 +106,11 @@ export function DataTable<T>({
               enableSorting: false,
               enableHiding: false,
             },
-          ] as ColumnDef<T>[])),
+          ] as ColumnDef<T>[])
+        : []),
       ...initialColumns,
     ];
-  }, [initialColumns, rowSelectable]);
+  }, [initialColumns, rowSelectable, selectionCondition]);
 
   const handleUpdatePagination = (updaterOrValue: Updater<PaginationState>) => {
     let paginationUpdate: PaginationState;
@@ -128,7 +135,13 @@ export function DataTable<T>({
     }
 
     setRowSelection(rowSelectionUpdate);
-    onRowSelectionChange?.(table.getSelectedRowModel().rows.map((row) => row.original));
+
+    if (onRowSelectionChange && rowSelectionUpdate && data && data.length > 0) {
+      const selected = Object.keys(rowSelectionUpdate)
+        .filter((key) => rowSelectionUpdate[key as keyof typeof rowSelectionUpdate])
+        .map((index) => data[parseInt(index)]);
+      onRowSelectionChange(selected);
+    }
   };
 
   const table = useReactTable({
@@ -228,7 +241,8 @@ export function DataTable<T>({
               ))
             ) : (
               <TableRow className="hover:bg-transparent">
-                <TableCell colSpan={columns.length} className="h-24 text-center">
+                <TableCell colSpan={columns.length} className="h-24 text-center text-muted-foreground">
+                  <InboxIcon className="mx-auto mb-2 h-6 w-6 text-muted-foreground" />
                   {emptyMessage || "Aucun résultat."}
                 </TableCell>
               </TableRow>

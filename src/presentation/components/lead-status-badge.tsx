@@ -1,18 +1,15 @@
-import { Lead } from "@/domain/entities/lead";
+import { AcquireLead } from "@/domain/entities/lead";
 import { Badge } from "./ui/badge";
-import { Check, CheckCheck, Loader, Phone, XCircle } from "lucide-react";
+import { CheckCircle2, Loader, XCircle } from "lucide-react";
 import { useMemo } from "react";
 
-export const LeadStatusBadge = ({ lead, className }: { lead: Lead; className?: string }) => {
+export const LeadStatusBadge = ({ lead, className }: { lead: AcquireLead; className?: string }) => {
   const variant = useMemo(() => {
     switch (lead.status) {
-      case "contacted":
-      case "validated":
-        return "fade-success";
+      case "accepted":
+        return "success";
       case "pending":
         return "warning";
-      case "converted":
-        return "success";
       case "rejected":
         return "destructive";
     }
@@ -20,12 +17,8 @@ export const LeadStatusBadge = ({ lead, className }: { lead: Lead; className?: s
 
   const icon = useMemo(() => {
     switch (lead.status) {
-      case "contacted":
-        return <Phone />;
-      case "converted":
-        return <CheckCheck />;
-      case "validated":
-        return <Check />;
+      case "accepted":
+        return <CheckCircle2 />;
       case "pending":
         return <Loader />;
       case "rejected":
@@ -35,12 +28,8 @@ export const LeadStatusBadge = ({ lead, className }: { lead: Lead; className?: s
 
   const label = useMemo(() => {
     switch (lead.status) {
-      case "contacted":
-        return "Contacté";
-      case "validated":
-        return "Validé";
-      case "converted":
-        return "Converti";
+      case "accepted":
+        return "Accepté";
       case "pending":
         return "En attente";
       case "rejected":

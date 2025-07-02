@@ -43,8 +43,11 @@ export const formatDateFromPattern = (
   return format(date, pattern, { locale: fr });
 };
 
-export const formatIntervalDateToHuman = (startDate?: Date, endDate?: Date): string => {
+export const formatIntervalDateToHuman = (startDate?: Date | string, endDate?: Date | string): string => {
   if (!startDate || !endDate) return "";
 
-  return formatDistance(startDate, endDate, { locale: fr });
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+
+  return formatDistance(start, end, { locale: fr });
 };
