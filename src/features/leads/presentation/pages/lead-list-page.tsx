@@ -25,7 +25,6 @@ export default function LeadListPage() {
   const bulkRejection = useModal();
 
   const handleRowSelectionChange = (rows: AcquireLead[]) => {
-    console.log(rows);
     setSelectedLeads(rows);
   };
 

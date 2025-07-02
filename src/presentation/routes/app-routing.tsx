@@ -13,6 +13,7 @@ const EditCampaignPage = lazy(() => import("@/features/campaigns/presentation/pa
 const LeadListPage = lazy(() => import("@/features/leads/presentation/pages/lead-list-page"));
 const TransactionListPage = lazy(() => import("@/features/transactions/presentation/pages/transaction-list-page"));
 const ProfilePage = lazy(() => import("@/features/profile/presentation/pages/profile-page"));
+const ResourceExplorePage = lazy(() => import("@/features/resources/presentation/pages/resource-explore-page"));
 
 export const router = createBrowserRouter([
   {
@@ -68,6 +69,14 @@ export const router = createBrowserRouter([
         element: (
           <Suspense fallback={<PageSkeleton />}>
             <TransactionListPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: "resources",
+        element: (
+          <Suspense fallback={<PageSkeleton />}>
+            <ResourceExplorePage />
           </Suspense>
         ),
       },

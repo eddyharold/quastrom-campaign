@@ -1,4 +1,4 @@
-import { ArrowLeftRight, LayoutDashboard, Link2, Settings, Users } from "lucide-react";
+import { ArrowLeftRight, LayoutDashboard, Link2, Settings, Users, Book } from "lucide-react";
 import { SidebarMenuGroup } from "@/domain/types/sidebar-menu-item";
 
 export const MENU_GROUPS: SidebarMenuGroup[] = [
@@ -39,6 +39,11 @@ export const MENU_GROUPS_2: SidebarMenuGroup[] = [
   {
     title: "Configurations",
     menus: [
+      {
+        title: "Ressources",
+        url: "/resources",
+        icon: Book,
+      },
       {
         title: "Profil",
         url: "/profile",

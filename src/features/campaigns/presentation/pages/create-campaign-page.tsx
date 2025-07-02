@@ -838,7 +838,10 @@ export default function CreateCampaign() {
 
               <Card>
                 <CardHeader className="border-b border-dashed">
-                  <CardTitle>Identité visuelle (obligatoire)</CardTitle>
+                  <CardTitle>Identité visuelle</CardTitle>
+                  <CardDescription>
+                    Personnalisez l'apparence de vos campagnes (au moins une des trois ci-dessous est requise)
+                  </CardDescription>
                 </CardHeader>
 
                 <CardContent className="space-y-8">
@@ -1205,8 +1208,8 @@ export default function CreateCampaign() {
                 <CardContent className="space-y-6">
                   <div className="bg-accent/60 p-4 rounded-md mb-6">
                     <div className="flex justify-between items-center">
-                      <p className="text-lg">Solde actuel</p>
-                      <p className="font-bold text-2xl">{formatCurrency(walletBalance)}</p>
+                      <p className="text-base font-semibold">Solde actuel</p>
+                      <p className="font-bold text-xl">{formatCurrency(walletBalance)}</p>
                     </div>
                   </div>
 
