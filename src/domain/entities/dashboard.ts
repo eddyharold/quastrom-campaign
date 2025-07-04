@@ -10,3 +10,10 @@ export interface DashboardStats {
   histogram_data_clicks: { date: string; count: number }[];
   histogram_data_conversions: { date: string; count: number }[];
 }
+
+export type PerformanceAreaChartData = {
+  date: string;
+  clicks: number;
+  leads: number;
+  conversions: number;
+};

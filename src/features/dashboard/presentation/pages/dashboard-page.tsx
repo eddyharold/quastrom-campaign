@@ -1,11 +1,11 @@
 import { useEffect, useMemo } from "react";
 import {
   ChevronRight,
-  Eye,
   MousePointerClick,
   Pause,
   Percent,
   Play,
+  Plus,
   RefreshCcw,
   Settings,
   TrendingUp,
@@ -15,9 +15,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/presentation/compone
 import { useLayoutContext } from "@/presentation/providers/layout-provider";
 import { Tabs, TabsList, TabsTrigger } from "@/presentation/components/ui/tabs";
 import { formatCurrency, formatNumber } from "@/domain/utils/currency";
-import { PerformanceLineChart } from "../components/perfomance-line-chart";
+import { PerformanceAreaChart } from "../components/perfomance-area-chart";
 import { Button } from "@/presentation/components/ui/button";
-import { Badge } from "@/presentation/components/ui/badge";
 import { Link } from "react-router";
 import { SystemAlert } from "../components/notification-pannel";
 import { WalletBalanceCard } from "@/presentation/components/wallet-balance-card";
@@ -30,6 +29,8 @@ import { Campaign } from "@/domain/entities/campaign";
 import { cn } from "@/domain/utils/common";
 import { useGetRecentNotification } from "@/application/use-cases/get-all-notification-query";
 import { Skeleton } from "@/presentation/components/ui/skeleton";
+import { CampaignStatusBadge } from "@/presentation/components/campaign-status-badge";
+import { PerformanceAreaChartData } from "@/domain/types/chart";
 
 export default function DashboardPage() {
   const { user } = useAuthContext();
@@ -64,7 +65,7 @@ export default function DashboardPage() {
     ]);
   }, [updateBreadcrumb]);
 
-  const performanceData = useMemo(() => {
+  const performanceData: PerformanceAreaChartData[] = useMemo(() => {
     if (!dashboardStats) return [];
 
     // Helper function to format date as MM/YY
@@ -92,9 +93,9 @@ export default function DashboardPage() {
     // Create the merged data array with formatted dates
     return allDates.map((date) => ({
       date: formatDate(date),
-      Clics: clicksMap.get(date) || 0,
-      Leads: leadsMap.get(date) || 0,
-      Conversions: conversionsMap.get(date) || 0,
+      clicks: clicksMap.get(date) || 0,
+      leads: leadsMap.get(date) || 0,
+      conversions: conversionsMap.get(date) || 0,
     }));
   }, [dashboardStats]);
 
@@ -249,13 +250,13 @@ export default function DashboardPage() {
           </div>
 
           <Card>
-            <CardContent className="pt-6">
+            <CardContent className="pt-6 h-[400px]">
               {isEmptyHistogram ? (
                 <div className="flex items-center justify-center h-full border border-dashed rounded-md min-h-[200px]">
                   <p className="text-muted-foreground">Aucune statistique disponible</p>
                 </div>
               ) : (
-                <PerformanceLineChart data={performanceData} categories={["Clics", "Leads", "Conversions"]} />
+                <PerformanceAreaChart data={performanceData} />
               )}
             </CardContent>
           </Card>
@@ -271,7 +272,10 @@ export default function DashboardPage() {
               <CardTitle>Campagnes récentes</CardTitle>
             </div>
             <Button asChild>
-              <Link to="/campaigns/create">Créer une campagne</Link>
+              <Link to="/campaigns/create">
+                <Plus />
+                Créer une campagne
+              </Link>
             </Button>
           </CardHeader>
           <CardContent>
@@ -287,9 +291,7 @@ export default function DashboardPage() {
                       <div className="flex flex-col gap-1.5">
                         <div className="flex items-center gap-2">
                           <h3 className="font-medium">{campaign.name}</h3>
-                          <Badge variant={campaign.status === "active" ? "default" : "secondary"}>
-                            {campaign.status}
-                          </Badge>
+                          <CampaignStatusBadge campaign={campaign} />
                         </div>
                         <p className="text-sm text-muted-foreground flex items-center gap-1.5">
                           <span>{campaign.category}</span>
@@ -315,9 +317,6 @@ export default function DashboardPage() {
                       </div>
 
                       <div className="flex items-center">
-                        <Button variant="ghost" onClick={() => viewCampaignDetails.open(campaign)}>
-                          <Eye />
-                        </Button>
                         <Button variant="ghost">{campaign.status !== "paused" ? <Pause /> : <Play />}</Button>
                         <Button variant="ghost" asChild>
                           <Link to={`/campaigns/${campaign.id}/edit`}>
